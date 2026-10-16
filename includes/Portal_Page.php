@@ -1,8 +1,8 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Portal;
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -11,7 +11,7 @@ class Portal_Page {
 
 	public static function register() {
 		Portal::register_page( 'billing', array(
-			'module'   => 'money',
+			'module'   => 'finance',
 			'label'    => 'Billing',
 			'order'    => 20,
 			'render'   => array( __CLASS__, 'render' ),

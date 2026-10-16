@@ -1,10 +1,10 @@
 <?php
-namespace BizyMoney\Import;
+namespace BizyFinance\Import;
 
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 use BizyCore\Services\Activity;
-use BizyMoney\Services\Invoices;
-use BizyMoney\Settings;
+use BizyFinance\Services\Invoices;
+use BizyFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class Invoice_Import {
 
-	const OPTION = 'bizymoney_imports';
+	const OPTION = 'bizyfinance_imports';
 
 	const INVOICE_NG = array( 'Invoice_No', 'Customer_Name', 'Customer_Email', 'Total_Amount', 'Amount_Paid', 'Balance', 'Tax_Amount', 'Currency', 'Payment_Status', 'Issue_Date', 'Due_Date', 'Added_On' );
 

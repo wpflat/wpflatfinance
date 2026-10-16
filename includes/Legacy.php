@@ -1,5 +1,5 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Migration\Legacy as Core_Legacy;
 use BizyCore\Migration\Reader;
@@ -19,7 +19,7 @@ class Legacy {
 	);
 
 	public static function init() {
-		add_filter( 'bizycore_legacy_import_money', array( __CLASS__, 'import' ), 10, 2 );
+		add_filter( 'bizycore_legacy_import_finance', array( __CLASS__, 'import' ), 10, 2 );
 	}
 
 	private static function columns( $table ) {
@@ -34,8 +34,8 @@ class Legacy {
 		foreach ( self::TABLES as $new ) {
 			$had += (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Schema::table( $new ) ); // phpcs:ignore WordPress.DB
 		}
-		if ( $had && empty( Core_Legacy::module_state( 'money' )['done'] ) ) {
-			return new \WP_Error( 'bizymoney_not_empty', 'BizyMoney already has records. Importing would mix them with the old ones. Remove them first, or skip this import.', array( 'status' => 409 ) );
+		if ( $had && empty( Core_Legacy::module_state( 'finance' )['done'] ) ) {
+			return new \WP_Error( 'bizyfinance_not_empty', 'BizyFinance already has records. Importing would mix them with the old ones. Remove them first, or skip this import.', array( 'status' => 409 ) );
 		}
 		foreach ( array_merge( array_values( self::TABLES ), array( 'client_billing', 'team_pay', 'project_money', 'phase_money', 'task_money' ) ) as $new ) {
 			$wpdb->query( 'TRUNCATE TABLE ' . Schema::table( $new ) ); // phpcs:ignore WordPress.DB
@@ -106,7 +106,7 @@ class Legacy {
 			Settings::update( $new );
 		}
 		if ( isset( $opts['bizydash_payout_next'] ) ) {
-			update_option( 'bizymoney_payout_next', (int) $opts['bizydash_payout_next'] );
+			update_option( 'bizyfinance_payout_next', (int) $opts['bizydash_payout_next'] );
 		}
 		$lk = 0;
 		$lt = \BizyCore\Database\Schema::table( 'bizy_lookups' );

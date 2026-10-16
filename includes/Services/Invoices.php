@@ -1,10 +1,10 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
 use BizyCore\Services\Activity;
 
-use BizyMoney\Schema;
-use BizyMoney\Settings;
+use BizyFinance\Schema;
+use BizyFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -132,10 +132,10 @@ class Invoices {
 			$tbl = Schema::table( 'charge' === $l['source_type'] ? 'charges' : 'renewals' );
 			$row = $wpdb->get_row( $wpdb->prepare( "SELECT client_id, invoice_id FROM $tbl WHERE id=%d", $l['source_id'] ), ARRAY_A ); // phpcs:ignore WordPress.DB
 			if ( ! $row || (int) $row['client_id'] !== (int) $client_id ) {
-				return new \WP_Error( 'bizymoney_invalid', 'A billed item on this invoice belongs to a different client.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'A billed item on this invoice belongs to a different client.', array( 'status' => 400 ) );
 			}
 			if ( (int) $row['invoice_id'] > 0 && (int) $row['invoice_id'] !== (int) $invoice_id ) {
-				return new \WP_Error( 'bizymoney_invalid', 'A billed item on this invoice is already on another invoice.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'A billed item on this invoice is already on another invoice.', array( 'status' => 400 ) );
 			}
 		}
 		return true;
@@ -268,7 +268,7 @@ class Invoices {
 				$amt = round( $total * $pct / 100, 2 );
 			}
 			if ( null === $amt || $amt <= 0 ) {
-				return new \WP_Error( 'bizymoney_invalid', 'Each instalment needs an amount or a percentage.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'Each instalment needs an amount or a percentage.', array( 'status' => 400 ) );
 			}
 			if ( null === $pct && $total > 0 ) {
 				$pct = round( $amt / $total * 100, 2 );
@@ -290,7 +290,7 @@ class Invoices {
 			if ( abs( $pct_sum - 100 ) <= 0.05 && abs( $diff ) <= max( 1, $total * 0.001 ) ) {
 				$out[ count( $out ) - 1 ]['amount'] = round( $out[ count( $out ) - 1 ]['amount'] + $diff, 2 ); // rounding remainder
 			} else {
-				return new \WP_Error( 'bizymoney_invalid', sprintf( 'The instalments add up to %s but the invoice total is %s.', number_format( $sum, 2 ), number_format( $total, 2 ) ), array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', sprintf( 'The instalments add up to %s but the invoice total is %s.', number_format( $sum, 2 ), number_format( $total, 2 ) ), array( 'status' => 400 ) );
 			}
 		} elseif ( 0.0 !== $diff ) {
 			$out[ count( $out ) - 1 ]['amount'] = round( $out[ count( $out ) - 1 ]['amount'] + $diff, 2 );
@@ -391,7 +391,7 @@ class Invoices {
 		if ( $status !== $inv['status'] || abs( $paid - (float) $inv['amount_paid'] ) > 0.001 ) {
 			$wpdb->update( $tbl, array( 'status' => $status, 'amount_paid' => $paid, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $invoice_id ) );
 			if ( $status !== $inv['status'] ) {
-				do_action( 'bizymoney_invoice_status', (int) $invoice_id, $inv['status'], $status );
+				do_action( 'bizyfinance_invoice_status', (int) $invoice_id, $inv['status'], $status );
 				Activity::log( 'invoices', $invoice_id, $inv['client_id'], 'status', sprintf( 'Invoice %s is now %s', $inv['invoice_number'], str_replace( '_', ' ', $status ) ) );
 			}
 		}
@@ -414,7 +414,7 @@ class Invoices {
 
 	/** First path segment of public invoice links (Settings → invoice link word). */
 	public static function slug_base() {
-		$s = \BizyMoney\Settings::get();
+		$s = \BizyFinance\Settings::get();
 		$b = isset( $s['invoice_slug_base'] ) ? sanitize_title( $s['invoice_slug_base'] ) : '';
 		return '' !== $b ? $b : 'invoice';
 	}
@@ -425,11 +425,11 @@ class Invoices {
 		$tbl  = Schema::table( 'invoices' );
 		$slug = sanitize_title( $slug );
 		if ( strlen( $slug ) < 4 || strlen( $slug ) > 60 ) {
-			return new \WP_Error( 'bizymoney_slug', 'Use 4–60 letters, numbers or dashes.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_slug', 'Use 4–60 letters, numbers or dashes.', array( 'status' => 400 ) );
 		}
 		$taken = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $tbl WHERE public_token=%s AND id<>%d", $slug, $invoice_id ) ); // phpcs:ignore WordPress.DB
 		if ( $taken ) {
-			return new \WP_Error( 'bizymoney_slug', 'That link is already used by another invoice.', array( 'status' => 409 ) );
+			return new \WP_Error( 'bizyfinance_slug', 'That link is already used by another invoice.', array( 'status' => 409 ) );
 		}
 		$wpdb->update( $tbl, array( 'public_token' => $slug ), array( 'id' => $invoice_id ) );
 		return $slug;
@@ -466,7 +466,7 @@ class Invoices {
 		self::refresh_status( $invoice_id );
 		Activity::log( 'invoices', $invoice_id, $inv['client_id'], 'sent', sprintf( 'Invoice %s marked as sent', $inv['invoice_number'] ) );
 		if ( 'draft' === $inv['status'] || empty( $inv['sent_at'] ) ) {
-			do_action( 'bizymoney_invoice_sent', (int) $invoice_id );
+			do_action( 'bizyfinance_invoice_sent', (int) $invoice_id );
 		}
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $tbl WHERE id=%d", $invoice_id ), ARRAY_A ); // phpcs:ignore WordPress.DB
 	}
@@ -484,7 +484,7 @@ class Invoices {
 		$charge_ids  = array_values( array_unique( array_filter( array_map( 'intval', $charge_ids ) ) ) );
 		$renewal_ids = array_values( array_unique( array_filter( array_map( 'intval', $renewal_ids ) ) ) );
 		if ( ! $client_id || ( ! $charge_ids && ! $renewal_ids ) ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Select a client and at least one charge or renewal.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Select a client and at least one charge or renewal.', array( 'status' => 400 ) );
 		}
 
 		$ch       = Schema::table( 'charges' );
@@ -496,14 +496,14 @@ class Invoices {
 			$in   = implode( ',', $charge_ids );
 			$rows = $wpdb->get_results( "SELECT * FROM $ch WHERE id IN ($in)", ARRAY_A ); // phpcs:ignore WordPress.DB
 			if ( count( $rows ) !== count( $charge_ids ) ) {
-				return new \WP_Error( 'bizymoney_invalid', 'One or more charges were not found.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'One or more charges were not found.', array( 'status' => 400 ) );
 			}
 			foreach ( $rows as $c ) {
 				if ( (int) $c['client_id'] !== $client_id || 'pending' !== $c['status'] ) {
-					return new \WP_Error( 'bizymoney_invalid', 'Charges must be pending and belong to the selected client.', array( 'status' => 400 ) );
+					return new \WP_Error( 'bizyfinance_invalid', 'Charges must be pending and belong to the selected client.', array( 'status' => 400 ) );
 				}
 				if ( $currency && $currency !== $c['currency'] ) {
-					return new \WP_Error( 'bizymoney_currency', 'All items on one invoice must share a currency.', array( 'status' => 400 ) );
+					return new \WP_Error( 'bizyfinance_currency', 'All items on one invoice must share a currency.', array( 'status' => 400 ) );
 				}
 				$currency = $c['currency'];
 				$lines[]  = array( 'description' => $c['description'], 'quantity' => 1, 'unit_price' => (float) $c['price'], 'cost' => (float) $c['cost'], 'service_id' => (int) $c['service_id'], 'source_type' => 'charge', 'source_id' => (int) $c['id'], 'client_service_id' => (int) $c['client_service_id'] );
@@ -514,14 +514,14 @@ class Invoices {
 			$in   = implode( ',', $renewal_ids );
 			$rows = $wpdb->get_results( "SELECT r.*, s.name AS service_name, cs.service_id AS cat_service_id FROM $rn r LEFT JOIN " . Schema::table( 'client_services' ) . ' cs ON cs.id=r.client_service_id LEFT JOIN ' . Schema::table( 'catalog' ) . " s ON s.id=cs.service_id WHERE r.id IN ($in)", ARRAY_A ); // phpcs:ignore WordPress.DB
 			if ( count( $rows ) !== count( $renewal_ids ) ) {
-				return new \WP_Error( 'bizymoney_invalid', 'One or more renewals were not found.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'One or more renewals were not found.', array( 'status' => 400 ) );
 			}
 			foreach ( $rows as $r ) {
 				if ( (int) $r['client_id'] !== $client_id || (int) $r['invoice_id'] > 0 || ! in_array( $r['status'], array( 'upcoming', 'due' ), true ) ) {
-					return new \WP_Error( 'bizymoney_invalid', 'Renewals must be open, un-invoiced and belong to the selected client.', array( 'status' => 400 ) );
+					return new \WP_Error( 'bizyfinance_invalid', 'Renewals must be open, un-invoiced and belong to the selected client.', array( 'status' => 400 ) );
 				}
 				if ( $currency && $currency !== $r['currency'] ) {
-					return new \WP_Error( 'bizymoney_currency', 'All items on one invoice must share a currency.', array( 'status' => 400 ) );
+					return new \WP_Error( 'bizyfinance_currency', 'All items on one invoice must share a currency.', array( 'status' => 400 ) );
 				}
 				$currency = $r['currency'];
 				$next_due = Renewals::next_date( $r['due_date'], $r['frequency'], $r['interval_days'] );
@@ -579,7 +579,7 @@ class Invoices {
 		$wpdb->insert( Schema::table( 'invoices' ), $data );
 		$id = (int) $wpdb->insert_id;
 		if ( ! $id ) {
-			return new \WP_Error( 'bizymoney_db', 'Could not create the invoice.', array( 'status' => 500 ) );
+			return new \WP_Error( 'bizyfinance_db', 'Could not create the invoice.', array( 'status' => 500 ) );
 		}
 
 		self::apply_lines( $id, $lines );

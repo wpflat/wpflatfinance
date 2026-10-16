@@ -4,7 +4,7 @@ import { StatCard } from '../core';
 import MoneyMap from '../components/MoneyMap.vue';
 
 const props = defineProps( { department: { type: Object, default: () => ( {} ) } } );
-const m = computed( () => ( props.department.modules && props.department.modules.money ) || null );
+const m = computed( () => ( props.department.modules && props.department.modules.finance ) || null );
 const profitNeg = computed( () => !! m.value && Object.values( m.value.profit || {} ).some( ( v ) => v.amount < 0 ) );
 </script>
 

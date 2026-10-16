@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
-// BizyMoney is a separate bundle that runs inside BizyCore's page: Vue is not bundled again, it is BizyCore's window.Vue.
+// BizyFinance is a separate bundle that runs inside BizyCore's page: Vue is not bundled again, it is BizyCore's window.Vue.
 export default defineConfig( {
 	root: 'ui',
 	plugins: [ vue() ],
@@ -10,7 +10,7 @@ export default defineConfig( {
 		outDir: '../build',
 		emptyOutDir: true,
 		cssCodeSplit: false,
-		lib: { entry: 'main.js', name: 'BizyMoney', formats: [ 'iife' ], fileName: () => 'bizymoney.js', cssFileName: 'bizymoney' },
+		lib: { entry: 'main.js', name: 'BizyFinance', formats: [ 'iife' ], fileName: () => 'bizyfinance.js', cssFileName: 'bizyfinance' },
 		rollupOptions: { external: [ 'vue' ], output: { globals: { vue: 'Vue' } } },
 	},
 } );

@@ -1,18 +1,18 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Portal;
 use BizyCore\Services\Notifications as N;
 
 defined( 'ABSPATH' ) || exit;
 
-/** The notifications BizyMoney raises, and the daily reminders for invoices that are due or late. */
+/** The notifications BizyFinance raises, and the daily reminders for invoices that are due or late. */
 class Notify {
 
 	public static function init() {
-		add_action( 'bizymoney_invoice_sent', array( __CLASS__, 'invoice_sent' ) );
-		add_action( 'bizymoney_invoice_status', array( __CLASS__, 'invoice_status' ), 10, 3 );
-		add_action( 'bizymoney_payment_saved', array( __CLASS__, 'payment' ), 10, 2 );
+		add_action( 'bizyfinance_invoice_sent', array( __CLASS__, 'invoice_sent' ) );
+		add_action( 'bizyfinance_invoice_status', array( __CLASS__, 'invoice_status' ), 10, 3 );
+		add_action( 'bizyfinance_payment_saved', array( __CLASS__, 'payment' ), 10, 2 );
 		add_action( 'bizycore_daily', array( __CLASS__, 'daily' ), 30 );
 	}
 
@@ -59,9 +59,9 @@ class Notify {
 			return;
 		}
 		if ( 'paid' === $new ) {
-			N::emit( 'team_invoice_paid', N::users_with( 'bizymoney_finance' ), $i['company_name'] . ' paid invoice ' . $i['invoice_number'], self::money( $i['amount'], $i['currency'] ) . ' received in full.', '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'paid:' . $i['id'] );
+			N::emit( 'team_invoice_paid', N::users_with( 'bizyfinance_finance' ), $i['company_name'] . ' paid invoice ' . $i['invoice_number'], self::money( $i['amount'], $i['currency'] ) . ' received in full.', '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'paid:' . $i['id'] );
 		} elseif ( 'overdue' === $new ) {
-			N::emit( 'team_invoice_overdue', N::users_with( 'bizymoney_finance' ), 'Invoice ' . $i['invoice_number'] . ' is overdue', sprintf( '%s owes %s (due %s).', $i['company_name'], self::money( (float) $i['amount'] - (float) $i['amount_paid'], $i['currency'] ), $i['due_date'] ), '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'overdue:' . $i['id'] . ':' . $i['due_date'] );
+			N::emit( 'team_invoice_overdue', N::users_with( 'bizyfinance_finance' ), 'Invoice ' . $i['invoice_number'] . ' is overdue', sprintf( '%s owes %s (due %s).', $i['company_name'], self::money( (float) $i['amount'] - (float) $i['amount_paid'], $i['currency'] ), $i['due_date'] ), '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'overdue:' . $i['id'] . ':' . $i['due_date'] );
 		}
 	}
 
@@ -79,7 +79,7 @@ class Notify {
 	/** Invoices coming due, and invoices still unpaid after their due date, reminded to the client at the owner's pace. */
 	public static function daily() {
 		global $wpdb;
-		if ( ! \BizyCore\Registry::enabled( 'money' ) ) {
+		if ( ! \BizyCore\Registry::enabled( 'finance' ) ) {
 			return;
 		}
 		$today = current_time( 'Y-m-d' );

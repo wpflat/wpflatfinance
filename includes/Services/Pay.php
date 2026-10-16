@@ -1,10 +1,10 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
 use BizyCore\Services\Activity;
 
-use BizyMoney\Schema;
-use BizyMoney\Settings;
+use BizyFinance\Schema;
+use BizyFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -140,8 +140,8 @@ class Pay {
 	/* ───────────────────────── Payouts ───────────────────────── */
 
 	public static function next_payout_number() {
-		$n = max( 1, (int) get_option( 'bizymoney_payout_next', 1 ) );
-		update_option( 'bizymoney_payout_next', $n + 1 );
+		$n = max( 1, (int) get_option( 'bizyfinance_payout_next', 1 ) );
+		update_option( 'bizyfinance_payout_next', $n + 1 );
 		return 'PAY-' . str_pad( (string) $n, 4, '0', STR_PAD_LEFT );
 	}
 
@@ -155,35 +155,35 @@ class Pay {
 		$member_id = (int) $member_id;
 		$item_ids  = array_values( array_unique( array_filter( array_map( 'intval', $item_ids ) ) ) );
 		if ( ! $member_id || ! $item_ids ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Choose who to pay and at least one owed item.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Choose who to pay and at least one owed item.', array( 'status' => 400 ) );
 		}
 		$items = Schema::table( 'pay_items' );
 		$in    = implode( ',', $item_ids );
 		$rows  = $wpdb->get_results( "SELECT * FROM $items WHERE id IN ($in)", ARRAY_A ); // phpcs:ignore WordPress.DB
 		if ( count( $rows ) !== count( $item_ids ) ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Some of those items no longer exist.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Some of those items no longer exist.', array( 'status' => 400 ) );
 		}
 		$total = 0.0;
 		$cur   = '';
 		foreach ( $rows as $r ) {
 			if ( (int) $r['team_member_id'] !== $member_id || 'payable' !== $r['status'] ) {
-				return new \WP_Error( 'bizymoney_invalid', 'Only unpaid items belonging to that person can be paid.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', 'Only unpaid items belonging to that person can be paid.', array( 'status' => 400 ) );
 			}
 			if ( $cur && $cur !== $r['currency'] ) {
-				return new \WP_Error( 'bizymoney_currency', 'Pay one currency at a time.', array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_currency', 'Pay one currency at a time.', array( 'status' => 400 ) );
 			}
 			$cur    = $r['currency'];
 			$total += (float) $r['amount'];
 		}
 		$total = round( $total, 2 );
 		if ( $total <= 0 ) {
-			return new \WP_Error( 'bizymoney_invalid', 'The total to pay must be more than zero.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'The total to pay must be more than zero.', array( 'status' => 400 ) );
 		}
 		$now = current_time( 'mysql' );
 		$wpdb->insert( Schema::table( 'payouts' ), array( 'number' => self::next_payout_number(), 'team_member_id' => $member_id, 'paid_on' => $paid_on ? $paid_on : Billing::today(), 'method' => sanitize_text_field( $method ), 'reference' => sanitize_text_field( $reference ), 'amount' => $total, 'currency' => $cur, 'notes' => sanitize_textarea_field( $notes ), 'status' => 'paid', 'department_id' => self::member_department( $member_id ), 'created_by' => get_current_user_id(), 'created_at' => $now, 'updated_at' => $now ) );
 		$pid = (int) $wpdb->insert_id;
 		if ( ! $pid ) {
-			return new \WP_Error( 'bizymoney_db', 'Could not record the payout.', array( 'status' => 500 ) );
+			return new \WP_Error( 'bizyfinance_db', 'Could not record the payout.', array( 'status' => 500 ) );
 		}
 		$wpdb->query( $wpdb->prepare( "UPDATE $items SET status='paid', payout_id=%d, updated_at=%s WHERE id IN ($in)", $pid, $now ) ); // phpcs:ignore WordPress.DB
 		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Schema::table( 'payouts' ) . ' WHERE id=%d', $pid ), ARRAY_A ); // phpcs:ignore WordPress.DB
@@ -197,7 +197,7 @@ class Pay {
 		$po  = Schema::table( 'payouts' );
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $po WHERE id=%d", (int) $id ), ARRAY_A ); // phpcs:ignore WordPress.DB
 		if ( ! $row ) {
-			return new \WP_Error( 'bizymoney_not_found', 'Payout not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'bizyfinance_not_found', 'Payout not found.', array( 'status' => 404 ) );
 		}
 		if ( 'void' === $row['status'] ) {
 			return $row;

@@ -1,4 +1,4 @@
-// BizyMoney runs inside BizyCore's page: everything it shares comes from window.BizyCore.
+// BizyFinance runs inside BizyCore's page: everything it shares comes from window.BizyCore.
 const bc = window.BizyCore;
 export const { sdk, api, errorMessage, store, navigate, util, ui, components } = bc;
 export const { ElMessage, ElMessageBox } = ui;

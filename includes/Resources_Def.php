@@ -1,18 +1,18 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Lookups;
 
 use BizyCore\Resources;
 use BizyCore\Services\Activity;
-use BizyMoney\Services\Billing;
-use BizyMoney\Services\Charges;
-use BizyMoney\Services\Invoices;
-use BizyMoney\Services\Renewals;
+use BizyFinance\Services\Billing;
+use BizyFinance\Services\Charges;
+use BizyFinance\Services\Invoices;
+use BizyFinance\Services\Renewals;
 
 defined( 'ABSPATH' ) || exit;
 
-/** BizyMoney's REST resources: the catalog, subscriptions, renewals, charges, invoices, payments, expenses and pay. */
+/** BizyFinance's REST resources: the catalog, subscriptions, renewals, charges, invoices, payments, expenses and pay. */
 class Resources_Def {
 
 	const CHARGE_STATUSES  = array( 'pending', 'invoiced', 'waived', 'cancelled' );
@@ -32,7 +32,7 @@ class Resources_Def {
 		$defs = array(
 			'catalog'         => array(
 				'route'    => 'catalog',
-				'table'    => 'bizymoney_catalog',
+				'table'    => 'bizyfinance_catalog',
 				'label'    => 'Service',
 				'cols'     => array(
 					'name' => 's', 'description' => 't', 'default_billing_period' => 's', 'default_cost' => 'd', 'default_price' => 'd',
@@ -68,7 +68,7 @@ class Resources_Def {
 						$kind = ( $period && 'none' !== $period ) ? 'recurring' : 'one_off';
 					}
 					if ( 'recurring' === $kind && ( ! $period || 'none' === $period ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'A recurring service needs a billing cycle (e.g. monthly or annually).', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'A recurring service needs a billing cycle (e.g. monthly or annually).', array( 'status' => 400 ) );
 					}
 					$d['kind'] = $kind;
 					if ( 'one_off' === $kind ) {
@@ -80,7 +80,7 @@ class Resources_Def {
 
 			'client-services' => array(
 				'route'    => 'client-services',
-				'table'    => 'bizymoney_client_services',
+				'table'    => 'bizyfinance_client_services',
 				'label'    => 'Client service',
 				'select'   => ', c.name AS client_name, s.name AS service_name, s.type AS service_type, s.pricing AS service_pricing, s.unit_label AS service_unit, s.subject_label AS service_subject_label, dp.name AS department_name',
 				'join'     => 'LEFT JOIN ' . Schema::table( 'clients' ) . ' c ON c.id=t.client_id LEFT JOIN ' . Schema::table( 'catalog' ) . ' s ON s.id=t.service_id LEFT JOIN ' . Schema::table( 'brands' ) . ' dp ON dp.id=t.department_id',
@@ -153,10 +153,10 @@ class Resources_Def {
 					Renewals::sync_from_client_service( $row );
 				},
 				'decorate' => function ( $rows ) {
-					$next = \BizyMoney\Services\Subscriptions::next_cycles( wp_list_pluck( $rows, 'id' ) );
+					$next = \BizyFinance\Services\Subscriptions::next_cycles( wp_list_pluck( $rows, 'id' ) );
 					foreach ( $rows as &$r ) {
 						$r['is_retainer'] = false;
-						$r['mrr']         = 'active' === $r['status'] ? \BizyMoney\Services\Subscriptions::monthly_value( $r ) : 0;
+						$r['mrr']         = 'active' === $r['status'] ? \BizyFinance\Services\Subscriptions::monthly_value( $r ) : 0;
 						$r['next_cycle']  = isset( $next[ $r['id'] ] ) ? $next[ $r['id'] ] : null;
 					}
 					return $rows;
@@ -169,7 +169,7 @@ class Resources_Def {
 
 			'renewals'        => array(
 				'route'    => 'renewals',
-				'table'    => 'bizymoney_renewals',
+				'table'    => 'bizyfinance_renewals',
 				'label'    => 'Renewal',
 				'select'   => ', c.name AS client_name, s.name AS service_name, inv.invoice_number, inv.status AS invoice_status, dp.name AS department_name',
 				'join'     => $cs_join . ' LEFT JOIN ' . Schema::table( 'invoices' ) . ' inv ON inv.id=t.invoice_id',
@@ -194,7 +194,7 @@ class Resources_Def {
 					if ( ! $existing ) {
 						$cs = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Schema::table( 'client_services' ) . ' WHERE id=%d', isset( $d['client_service_id'] ) ? $d['client_service_id'] : 0 ), ARRAY_A ); // phpcs:ignore WordPress.DB
 						if ( ! $cs ) {
-							return new \WP_Error( 'bizymoney_invalid', 'Choose a valid client service.', array( 'status' => 400 ) );
+							return new \WP_Error( 'bizyfinance_invalid', 'Choose a valid client service.', array( 'status' => 400 ) );
 						}
 						$d['client_id'] = (int) $cs['client_id'];
 						$d             += array(
@@ -219,7 +219,7 @@ class Resources_Def {
 
 			'charges'         => array(
 				'route'    => 'charges',
-				'table'    => 'bizymoney_charges',
+				'table'    => 'bizyfinance_charges',
 				'label'    => 'One-off bill',
 				'select'   => ', c.name AS client_name, s.name AS service_name, inv.invoice_number, inv.status AS invoice_status',
 				'join'     => 'LEFT JOIN ' . Schema::table( 'clients' ) . ' c ON c.id=t.client_id LEFT JOIN ' . Schema::table( 'client_services' ) . ' cs ON cs.id=t.client_service_id LEFT JOIN ' . Schema::table( 'catalog' ) . ' s ON s.id=IF(t.service_id>0, t.service_id, cs.service_id) LEFT JOIN ' . Schema::table( 'invoices' ) . ' inv ON inv.id=t.invoice_id' . ' LEFT JOIN ' . Schema::table( 'brands' ) . ' dp ON dp.id=t.department_id',
@@ -268,7 +268,7 @@ class Resources_Def {
 						}
 					}
 					if ( isset( $d['billing_timing'] ) && ! in_array( $d['billing_timing'], $timings, true ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'Unknown billing timing.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'Unknown billing timing.', array( 'status' => 400 ) );
 					}
 					if ( ! $existing ) {
 						$d += array( 'status' => 'pending', 'billing_timing' => 'now', 'incurred_on' => Billing::today() );
@@ -284,7 +284,7 @@ class Resources_Def {
 						global $wpdb;
 						$cid = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT client_id FROM ' . Schema::table( 'client_services' ) . ' WHERE id=%d', $merged['client_service_id'] ) ); // phpcs:ignore WordPress.DB
 						if ( $cid && $cid !== (int) $merged['client_id'] ) {
-							return new \WP_Error( 'bizymoney_invalid', 'That service belongs to a different client.', array( 'status' => 400 ) );
+							return new \WP_Error( 'bizyfinance_invalid', 'That service belongs to a different client.', array( 'status' => 400 ) );
 						}
 					}
 					// Recompute the bill date when timing / incurred date changed, or on create without an explicit custom date.
@@ -312,7 +312,7 @@ class Resources_Def {
 
 			'invoices'        => array(
 				'route'    => 'invoices',
-				'table'    => 'bizymoney_invoices',
+				'table'    => 'bizyfinance_invoices',
 				'label'    => 'Invoice',
 				'select'   => ', c.name AS client_name, dp.name AS department_name, (SELECT COALESCE(SUM(ii.cost),0) FROM ' . Schema::table( 'invoice_items' ) . ' ii WHERE ii.invoice_id=t.id) AS cost_total',
 				'join'     => self::client_join() . ' LEFT JOIN ' . Schema::table( 'brands' ) . ' dp ON dp.id=t.department_id',
@@ -348,7 +348,7 @@ class Resources_Def {
 					// Server-computed / system fields can never be set from the client.
 					unset( $d['amount_paid'], $d['view_count'], $d['subtotal'], $d['discount_amount'], $d['tax_amount'] );
 					if ( isset( $d['status'] ) && ! in_array( $d['status'], self::INVOICE_STATUSES, true ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'Unknown invoice status.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'Unknown invoice status.', array( 'status' => 400 ) );
 					}
 					if ( isset( $d['discount_type'] ) && ! in_array( $d['discount_type'], array( 'none', 'percent', 'fixed' ), true ) ) {
 						$d['discount_type'] = 'none';
@@ -462,7 +462,7 @@ class Resources_Def {
 
 			'payments'        => array(
 				'route'    => 'payments',
-				'table'    => 'bizymoney_payments',
+				'table'    => 'bizyfinance_payments',
 				'label'    => 'Payment',
 				'select'   => ', i.invoice_number, c.name AS client_name, dp.name AS department_name',
 				'join'     => 'LEFT JOIN ' . Schema::table( 'invoices' ) . ' i ON i.id=t.invoice_id LEFT JOIN ' . Schema::table( 'clients' ) . ' c ON c.id=t.client_id LEFT JOIN ' . Schema::table( 'brands' ) . ' dp ON dp.id=t.department_id',
@@ -478,12 +478,12 @@ class Resources_Def {
 				'before_save' => function ( $d, $existing ) {
 					global $wpdb;
 					if ( isset( $d['amount'] ) && $d['amount'] <= 0 ) {
-						return new \WP_Error( 'bizymoney_invalid', 'Payment amount must be greater than zero.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'Payment amount must be greater than zero.', array( 'status' => 400 ) );
 					}
 					if ( ! $existing ) {
 						$inv = $wpdb->get_row( $wpdb->prepare( 'SELECT client_id, currency FROM ' . Schema::table( 'invoices' ) . ' WHERE id=%d', isset( $d['invoice_id'] ) ? $d['invoice_id'] : 0 ), ARRAY_A ); // phpcs:ignore WordPress.DB
 						if ( ! $inv ) {
-							return new \WP_Error( 'bizymoney_invalid', 'Choose a valid invoice.', array( 'status' => 400 ) );
+							return new \WP_Error( 'bizyfinance_invalid', 'Choose a valid invoice.', array( 'status' => 400 ) );
 						}
 						$d['client_id'] = (int) $inv['client_id'];
 						$d['currency']  = $inv['currency'];
@@ -496,7 +496,7 @@ class Resources_Def {
 				},
 				'after_save' => function ( $row, $existing ) {
 					Invoices::refresh_status( $row['invoice_id'] );
-					do_action( 'bizymoney_payment_saved', $row, $existing );
+					do_action( 'bizyfinance_payment_saved', $row, $existing );
 				},
 				'after_delete' => function ( $row ) {
 					Invoices::refresh_status( $row['invoice_id'] );
@@ -505,7 +505,7 @@ class Resources_Def {
 
 			'expenses'        => array(
 				'route'    => 'expenses',
-				'table'    => 'bizymoney_expenses',
+				'table'    => 'bizyfinance_expenses',
 				'label'    => 'Expense',
 				'finance'  => true,
 				'select'   => ', dp.name AS department_name, c.name AS client_name',
@@ -534,7 +534,7 @@ class Resources_Def {
 				},
 				'before_save' => function ( $d, $existing ) {
 					if ( isset( $d['amount'] ) && (float) $d['amount'] <= 0 ) {
-						return new \WP_Error( 'bizymoney_invalid', 'The amount must be greater than zero.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'The amount must be greater than zero.', array( 'status' => 400 ) );
 					}
 					if ( ! $existing ) {
 						$d += array( 'status' => 'paid' );
@@ -558,7 +558,7 @@ class Resources_Def {
 
 			'recurring-expenses' => array(
 				'route'    => 'recurring-expenses',
-				'table'    => 'bizymoney_recurring_expenses',
+				'table'    => 'bizyfinance_recurring_expenses',
 				'label'    => 'Recurring expense',
 				'finance'  => true,
 				'select'   => ', dp.name AS department_name',
@@ -573,10 +573,10 @@ class Resources_Def {
 				},
 				'before_save' => function ( $d, $existing ) {
 					if ( isset( $d['amount'] ) && (float) $d['amount'] <= 0 ) {
-						return new \WP_Error( 'bizymoney_invalid', 'The amount must be greater than zero.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'The amount must be greater than zero.', array( 'status' => 400 ) );
 					}
 					if ( isset( $d['period'] ) && ( in_array( $d['period'], array( '', 'none', 'custom' ), true ) || Lookups::months_for( $d['period'] ) <= 0 ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'Choose how often it repeats (monthly, quarterly, annually…).', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'Choose how often it repeats (monthly, quarterly, annually…).', array( 'status' => 400 ) );
 					}
 					if ( ! $existing ) {
 						$d += array( 'status' => 'active', 'period' => 'monthly' );
@@ -592,7 +592,7 @@ class Resources_Def {
 				'decorate' => function ( $rows ) {
 					$today = Billing::today();
 					foreach ( $rows as &$r ) {
-						$r['monthly_value'] = \BizyMoney\Services\Expenses::monthly_value( $r['amount'], $r['period'] );
+						$r['monthly_value'] = \BizyFinance\Services\Expenses::monthly_value( $r['amount'], $r['period'] );
 						$r['days_until']    = $r['next_date'] ? (int) round( ( strtotime( $r['next_date'] ) - strtotime( $today ) ) / DAY_IN_SECONDS ) : null;
 					}
 					return $rows;
@@ -601,7 +601,7 @@ class Resources_Def {
 
 			'pay-allocations' => array(
 				'route'    => 'pay-allocations',
-				'table'    => 'bizymoney_pay_allocations',
+				'table'    => 'bizyfinance_pay_allocations',
 				'label'    => 'Pay split',
 				'finance'  => true,
 				'select'   => ', m.name AS member_name, ph.team_budget AS base_budget, ph.name AS phase_name',
@@ -616,19 +616,19 @@ class Resources_Def {
 				'before_save' => function ( $d, $existing ) {
 					global $wpdb;
 					if ( isset( $d['mode'] ) && ! in_array( $d['mode'], array( 'fixed', 'percent' ), true ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'Choose fixed amount or percent.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'Choose fixed amount or percent.', array( 'status' => 400 ) );
 					}
 					$mode  = isset( $d['mode'] ) ? $d['mode'] : ( $existing ? $existing['mode'] : 'fixed' );
 					$value = isset( $d['value'] ) ? (float) $d['value'] : ( $existing ? (float) $existing['value'] : 0 );
 					if ( $value < 0 || ( 'percent' === $mode && $value > 100 ) ) {
-						return new \WP_Error( 'bizymoney_invalid', 'A percentage must be between 0 and 100.', array( 'status' => 400 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'A percentage must be between 0 and 100.', array( 'status' => 400 ) );
 					}
 					$d['scope'] = 'phase';
 					$sid = isset( $d['scope_id'] ) ? (int) $d['scope_id'] : ( $existing ? (int) $existing['scope_id'] : 0 );
 					$mid = isset( $d['team_member_id'] ) ? (int) $d['team_member_id'] : ( $existing ? (int) $existing['team_member_id'] : 0 );
 					$dup = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Schema::table( 'pay_allocations' ) . " WHERE scope='phase' AND scope_id=%d AND team_member_id=%d AND id<>%d", $sid, $mid, $existing ? (int) $existing['id'] : 0 ) ); // phpcs:ignore WordPress.DB
 					if ( $dup ) {
-						return new \WP_Error( 'bizymoney_invalid', 'That person already has a share in this phase — edit it instead.', array( 'status' => 409 ) );
+						return new \WP_Error( 'bizyfinance_invalid', 'That person already has a share in this phase — edit it instead.', array( 'status' => 409 ) );
 					}
 					if ( ! $existing ) {
 						$d += array( 'mode' => 'fixed' );
@@ -636,12 +636,12 @@ class Resources_Def {
 					return $d;
 				},
 				'after_save' => function ( $row ) {
-					\BizyMoney\Services\Pay::sync_phase( $row['scope_id'] );
+					\BizyFinance\Services\Pay::sync_phase( $row['scope_id'] );
 				},
 				'before_delete' => function ( $row ) {
 					global $wpdb;
 					$paid = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Schema::table( 'pay_items' ) . " WHERE allocation_id=%d AND status='paid'", $row['id'] ) ); // phpcs:ignore WordPress.DB
-					return $paid ? new \WP_Error( 'bizymoney_blocked', 'This share has already been paid. Void the payout first.', array( 'status' => 409 ) ) : true;
+					return $paid ? new \WP_Error( 'bizyfinance_blocked', 'This share has already been paid. Void the payout first.', array( 'status' => 409 ) ) : true;
 				},
 				'after_delete' => function ( $row ) {
 					global $wpdb;
@@ -649,7 +649,7 @@ class Resources_Def {
 				},
 				'decorate' => function ( $rows ) {
 					foreach ( $rows as &$r ) {
-						$r['amount'] = \BizyMoney\Services\Pay::allocation_amount( $r, array( 'team_budget' => $r['base_budget'] ) );
+						$r['amount'] = \BizyFinance\Services\Pay::allocation_amount( $r, array( 'team_budget' => $r['base_budget'] ) );
 					}
 					return $rows;
 				},
@@ -657,7 +657,7 @@ class Resources_Def {
 
 			'pay-items'       => array(
 				'route'    => 'pay-items',
-				'table'    => 'bizymoney_pay_items',
+				'table'    => 'bizyfinance_pay_items',
 				'label'    => 'Earning',
 				'finance'  => true,
 				'select'   => ', m.name AS member_name, pj.name AS project_name, ph.name AS phase_name, po.number AS payout_number, tk.title AS task_title',
@@ -690,7 +690,7 @@ class Resources_Def {
 					if ( $existing ) {
 						$generated = in_array( $existing['kind'], array( 'phase', 'task', 'salary' ), true );
 						if ( 'payable' !== $existing['status'] ) {
-							return new \WP_Error( 'bizymoney_blocked', 'Paid or voided items are never edited. Void the payout and re-create it instead.', array( 'status' => 409 ) );
+							return new \WP_Error( 'bizyfinance_blocked', 'Paid or voided items are never edited. Void the payout and re-create it instead.', array( 'status' => 409 ) );
 						}
 						if ( $generated ) {
 							$keep = array();
@@ -698,27 +698,27 @@ class Resources_Def {
 								$keep['status'] = 'void';
 							}
 							if ( ! $keep ) {
-								return new \WP_Error( 'bizymoney_blocked', 'This earning was created automatically. Change the phase or task instead, or void it.', array( 'status' => 409 ) );
+								return new \WP_Error( 'bizyfinance_blocked', 'This earning was created automatically. Change the phase or task instead, or void it.', array( 'status' => 409 ) );
 							}
 							return $keep;
 						}
 					} else {
 						$d += array( 'kind' => 'bonus' );
 						if ( ! in_array( $d['kind'], $manual, true ) ) {
-							return new \WP_Error( 'bizymoney_invalid', 'Only a payment, bonus, deduction, reimbursement or adjustment can be added by hand.', array( 'status' => 400 ) );
+							return new \WP_Error( 'bizyfinance_invalid', 'Only a payment, bonus, deduction, reimbursement or adjustment can be added by hand.', array( 'status' => 400 ) );
 						}
 						$d['status'] = 'payable';
 						if ( empty( $d['earned_on'] ) ) {
 							$d['earned_on'] = Billing::today();
 						}
 						if ( empty( $d['team_member_id'] ) || ! $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM ' . Schema::table( 'team_members' ) . ' WHERE id=%d', (int) $d['team_member_id'] ) ) ) { // phpcs:ignore WordPress.DB
-							return new \WP_Error( 'bizymoney_invalid', 'Pick the team member this payment is for.', array( 'status' => 400 ) );
+							return new \WP_Error( 'bizyfinance_invalid', 'Pick the team member this payment is for.', array( 'status' => 400 ) );
 						}
 						// Optionally tied to a task: the project and phase follow the task.
 						if ( ! empty( $d['task_id'] ) ) {
 							$task = $wpdb->get_row( $wpdb->prepare( 'SELECT id, title, project_id, phase_id FROM ' . Schema::table( 'tasks' ) . ' WHERE id=%d', (int) $d['task_id'] ), ARRAY_A ); // phpcs:ignore WordPress.DB
 							if ( ! $task ) {
-								return new \WP_Error( 'bizymoney_invalid', 'That task no longer exists.', array( 'status' => 400 ) );
+								return new \WP_Error( 'bizyfinance_invalid', 'That task no longer exists.', array( 'status' => 400 ) );
 							}
 							$d['project_id'] = (int) $task['project_id'];
 							$d['phase_id']   = (int) $task['phase_id'];
@@ -752,7 +752,7 @@ class Resources_Def {
 					return $d;
 				},
 				'before_delete' => function () {
-					return new \WP_Error( 'bizymoney_blocked', 'Earnings are never deleted — void them instead so the books stay complete.', array( 'status' => 409 ) );
+					return new \WP_Error( 'bizyfinance_blocked', 'Earnings are never deleted — void them instead so the books stay complete.', array( 'status' => 409 ) );
 				},
 				'decorate' => function ( $rows ) {
 					foreach ( $rows as &$r ) {
@@ -764,7 +764,7 @@ class Resources_Def {
 
 			'payouts'         => array(
 				'route'    => 'payouts',
-				'table'    => 'bizymoney_payouts',
+				'table'    => 'bizyfinance_payouts',
 				'label'    => 'Payout',
 				'finance'  => true,
 				'readonly' => true,
@@ -793,9 +793,9 @@ class Resources_Def {
 		);
 		foreach ( $defs as $name => $cfg ) {
 			if ( in_array( $name, Module::FINANCE_RESOURCES, true ) ) {
-				$cfg['cap'] = 'bizymoney_finance'; // money about people and the business itself needs the finance capability
+				$cfg['cap'] = 'bizyfinance_finance'; // money about people and the business itself needs the finance capability
 			}
-			Resources::register( $name, $cfg, 'money' );
+			Resources::register( $name, $cfg, 'finance' );
 		}
 	}
 }

@@ -1,7 +1,7 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
-use BizyMoney\Settings;
+use BizyFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 

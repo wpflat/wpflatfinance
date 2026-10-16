@@ -141,7 +141,7 @@ const download = async ( type ) => {
 					<template #header><div class="bd-widget__head"><span>Money owed</span></div></template>
 					<ul class="bd-list">
 						<li><div><div class="bd-strong">{{ $fmt( 'Owed by {clients}' ) }}</div><div class="bd-muted bd-small">Unpaid invoices</div></div><MoneyMap :map="bal( 'receivable' )" empty="Nothing" /></li>
-						<li><div><div class="bd-strong">Owed to the team</div><div class="bd-muted bd-small">Earned, not paid yet</div></div><a class="bd-link" href="#" @click.prevent="navigate( '/money/payroll' )"><MoneyMap :map="bal( 'payable' )" empty="Nothing" /></a></li>
+						<li><div><div class="bd-strong">Owed to the team</div><div class="bd-muted bd-small">Earned, not paid yet</div></div><a class="bd-link" href="#" @click.prevent="navigate( '/finance/payroll' )"><MoneyMap :map="bal( 'payable' )" empty="Nothing" /></a></li>
 					</ul>
 					<div class="bd-costbox">
 						<div class="bd-muted bd-small">Every month, before anything new happens</div>

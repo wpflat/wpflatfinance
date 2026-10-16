@@ -1,9 +1,9 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
 use BizyCore\Services\Activity;
 
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 use BizyCore\Lookups;
 
 defined( 'ABSPATH' ) || exit;

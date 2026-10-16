@@ -1,15 +1,15 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Table names. BizyMoney's own tables are bizymoney_*; the code still asks for the short old names, and this maps
- * them: money tables to bizymoney_*, Core's to bizy_*, BizyTasks' to bizytasks_* (only when BizyTasks is on).
+ * Table names. BizyFinance's own tables are bizyfinance_*; the code still asks for the short old names, and this maps
+ * them: money tables to bizyfinance_*, Core's to bizy_*, BizyTasks' to bizytasks_* (only when BizyTasks is on).
  */
 class Schema {
 
-	/** BizyMoney's own tables (short names). */
+	/** BizyFinance's own tables (short names). */
 	const OWN = array( 'catalog', 'client_services', 'renewals', 'charges', 'invoices', 'invoice_items', 'invoice_installments', 'payments', 'email_log', 'expenses', 'recurring_expenses', 'pay_allocations', 'pay_items', 'payouts', 'client_billing', 'team_pay', 'project_money', 'phase_money', 'task_money' );
 
 	const CORE = array( 'clients' => 'bizy_clients', 'brands' => 'bizy_departments', 'departments' => 'bizy_departments', 'client_brands' => 'bizy_client_departments', 'client_contacts' => 'bizy_client_contacts', 'team_members' => 'bizy_team_members', 'activity' => 'bizy_activity', 'lookups' => 'bizy_lookups', 'threads' => 'bizy_threads', 'messages' => 'bizy_messages' );
@@ -22,7 +22,7 @@ class Schema {
 			$name = 'catalog';
 		}
 		if ( in_array( $name, self::OWN, true ) ) {
-			return $wpdb->prefix . 'bizymoney_' . $name;
+			return $wpdb->prefix . 'bizyfinance_' . $name;
 		}
 		if ( isset( self::CORE[ $name ] ) ) {
 			return $wpdb->prefix . self::CORE[ $name ];

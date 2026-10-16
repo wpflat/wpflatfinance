@@ -1,6 +1,6 @@
 {
-  "name": "bizymoney",
-  "version": "0.1.0",
+  "name": "bizyfinance",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Catalog, subscriptions and renewals, invoices, payments, expenses, payroll and profit for the Bizy suite, with public invoice and payslip pages.",

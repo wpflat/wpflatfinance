@@ -1,9 +1,9 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
 use BizyCore\Services\Activity;
 
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -43,7 +43,7 @@ class Payroll {
 				$skipped++;
 				continue;
 			}
-			$wpdb->insert( $items, array( 'team_member_id' => (int) $m['id'], 'kind' => 'salary', 'period' => $period, 'description' => 'Salary — ' . $label, 'amount' => round( (float) $m['salary_amount'], 2 ), 'currency' => $m['currency'] ? $m['currency'] : \BizyMoney\Settings::get( 'default_currency' ), 'earned_on' => $end, 'status' => 'payable', 'department_id' => (int) $m['department_id'], 'created_by' => get_current_user_id(), 'created_at' => $now, 'updated_at' => $now ) );
+			$wpdb->insert( $items, array( 'team_member_id' => (int) $m['id'], 'kind' => 'salary', 'period' => $period, 'description' => 'Salary — ' . $label, 'amount' => round( (float) $m['salary_amount'], 2 ), 'currency' => $m['currency'] ? $m['currency'] : \BizyFinance\Settings::get( 'default_currency' ), 'earned_on' => $end, 'status' => 'payable', 'department_id' => (int) $m['department_id'], 'created_by' => get_current_user_id(), 'created_at' => $now, 'updated_at' => $now ) );
 			$created++;
 			$total += (float) $m['salary_amount'];
 		}
@@ -102,7 +102,7 @@ class Payroll {
 					'kind'          => $m['kind'],
 					'department_name' => $m['department_name'],
 					'salary_amount' => (float) $m['salary_amount'],
-					'currency'      => $m['currency'] ? $m['currency'] : \BizyMoney\Settings::get( 'default_currency' ),
+					'currency'      => $m['currency'] ? $m['currency'] : \BizyFinance\Settings::get( 'default_currency' ),
 					'salary_due'    => in_array( $mid, array_map( function ( $x ) {
 						return (int) $x['id'];
 					}, self::eligible( $period ) ), true ),

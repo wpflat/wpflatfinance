@@ -1,14 +1,14 @@
 <?php
-namespace BizyMoney\Services;
+namespace BizyFinance\Services;
 
 use BizyCore\Services\Activity;
 use BizyCore\Services\Contacts;
 use BizyCore\Services\Mailer;
 
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 use BizyCore\Mail_Settings;
 use BizyCore\Resources;
-use BizyMoney\Settings;
+use BizyFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -105,7 +105,7 @@ class Invoice_Mail {
 			return true;
 		} ) );
 
-		$m      = array_merge( Mail_Settings::get_full(), array_intersect_key( \BizyMoney\Settings::get(), array_flip( array( "invoice_subject", "invoice_message" ) ) ) );
+		$m      = array_merge( Mail_Settings::get_full(), array_intersect_key( \BizyFinance\Settings::get(), array_flip( array( "invoice_subject", "invoice_message" ) ) ) );
 		$tokens = self::tokens( $d['inv'], $d['client'], wp_list_pluck( $rec['to'], 'name' ) );
 		$user   = wp_get_current_user();
 		return array(
@@ -164,7 +164,7 @@ class Invoice_Mail {
 			$name  = is_array( $item ) && isset( $item['name'] ) ? sanitize_text_field( $item['name'] ) : '';
 			$raw   = is_array( $item ) ? ( isset( $item['email'] ) ? $item['email'] : '' ) : (string) $item;
 			if ( '' === $email || ! is_email( $email ) ) {
-				return new \WP_Error( 'bizymoney_invalid', sprintf( '“%s” isn’t a valid email address.', sanitize_text_field( $raw ) ), array( 'status' => 400 ) );
+				return new \WP_Error( 'bizyfinance_invalid', sprintf( '“%s” isn’t a valid email address.', sanitize_text_field( $raw ) ), array( 'status' => 400 ) );
 			}
 			$k = strtolower( $email );
 			if ( isset( $seen[ $k ] ) ) {
@@ -209,11 +209,11 @@ class Invoice_Mail {
 	public static function send( $invoice_id, array $p, $test_to = '' ) {
 		$d = self::load( $invoice_id );
 		if ( ! $d ) {
-			return new \WP_Error( 'bizymoney_not_found', 'Invoice not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'bizyfinance_not_found', 'Invoice not found.', array( 'status' => 404 ) );
 		}
 		$inv = $d['inv'];
 		if ( 'cancelled' === $inv['status'] && ! $test_to ) {
-			return new \WP_Error( 'bizymoney_invalid', 'A cancelled invoice can’t be sent.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'A cancelled invoice can’t be sent.', array( 'status' => 400 ) );
 		}
 
 		$to  = self::clean_list( isset( $p['to'] ) ? $p['to'] : array() );
@@ -227,7 +227,7 @@ class Invoice_Mail {
 		$subject = isset( $p['subject'] ) ? (string) $p['subject'] : '';
 		$message = isset( $p['message'] ) ? (string) $p['message'] : '';
 		if ( '' === trim( $subject ) ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Add a subject line.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Add a subject line.', array( 'status' => 400 ) );
 		}
 
 		if ( $test_to ) {
@@ -247,10 +247,10 @@ class Invoice_Mail {
 		}
 
 		if ( ! $to ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Add at least one recipient in “To”. Give the client a primary contact with an email address.', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Add at least one recipient in “To”. Give the client a primary contact with an email address.', array( 'status' => 400 ) );
 		}
 		if ( count( $to ) + count( $cc ) + count( $bcc ) > self::MAX_RECIPIENTS ) {
-			return new \WP_Error( 'bizymoney_invalid', 'Too many recipients (max ' . self::MAX_RECIPIENTS . ').', array( 'status' => 400 ) );
+			return new \WP_Error( 'bizyfinance_invalid', 'Too many recipients (max ' . self::MAX_RECIPIENTS . ').', array( 'status' => 400 ) );
 		}
 		if ( ! empty( $p['bcc_self'] ) ) {
 			$me = wp_get_current_user();

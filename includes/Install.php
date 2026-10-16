@@ -1,13 +1,13 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 defined( 'ABSPATH' ) || exit;
 
-/** BizyMoney's tables. */
+/** BizyFinance's tables. */
 class Install {
 
 	const DB_VERSION = '1';
-	const OPTION     = 'bizymoney_db_version';
+	const OPTION     = 'bizyfinance_db_version';
 
 	/** Cheap check on every request so an updated plugin upgrades itself. */
 	public static function maybe_upgrade() {

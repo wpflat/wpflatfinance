@@ -1,14 +1,14 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Links;
 use BizyCore\Registry;
-use BizyMoney\Services\Pay;
+use BizyFinance\Services\Pay;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What BizyMoney adds to the records of BizyCore and BizyTasks: a client's billing currency, a team member's pay, a
+ * What BizyFinance adds to the records of BizyCore and BizyTasks: a client's billing currency, a team member's pay, a
  * project's price, a phase's budget, a task's pay. It keeps those fields in its own tables and shows them (to people
  * with the finance capability) on the other plugins' rows, so those plugins stay money-free.
  */
@@ -41,11 +41,11 @@ class Integrations {
 	}
 
 	private static function fin() {
-		return current_user_can( 'manage_options' ) || current_user_can( 'bizymoney_finance' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'bizyfinance_finance' );
 	}
 
 	private static function on() {
-		return Registry::enabled( 'money' );
+		return Registry::enabled( 'finance' );
 	}
 
 	private static function upsert( $table, $key, $id, array $data ) {
@@ -187,7 +187,7 @@ class Integrations {
 		foreach ( $rows as &$r ) {
 			$r['price']    = isset( $by[ (int) $r['id'] ] ) ? (float) $by[ (int) $r['id'] ]['price'] : 0;
 			$r['currency'] = isset( $by[ (int) $r['id'] ] ) ? $by[ (int) $r['id'] ]['currency'] : '';
-			$r['money']    = Pay::project_money( $r );
+			$r['finance']    = Pay::project_money( $r );
 		}
 		return $rows;
 	}
@@ -262,7 +262,7 @@ class Integrations {
 			return $ok;
 		}
 		$paid = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Schema::table( 'pay_items' ) . " WHERE phase_id=%d AND status='paid'", $row['id'] ) ); // phpcs:ignore WordPress.DB
-		return $paid ? new \WP_Error( 'bizymoney_blocked', 'This phase has paid team members. Void the payouts first, or keep the phase.', array( 'status' => 409 ) ) : $ok;
+		return $paid ? new \WP_Error( 'bizyfinance_blocked', 'This phase has paid team members. Void the payouts first, or keep the phase.', array( 'status' => 409 ) ) : $ok;
 	}
 
 	public static function phase_deleted( $row ) {
@@ -326,8 +326,8 @@ class Integrations {
 	/* ---- link types ---- */
 
 	public static function link_types() {
-		Links::register_type( 'invoice', array( 'module' => 'money', 'label' => 'Invoice', 'plural' => 'Invoices', 'resolve' => array( __CLASS__, 'resolve_invoice' ), 'search' => array( __CLASS__, 'search_invoices' ) ) );
-		Links::register_type( 'catalog_item', array( 'module' => 'money', 'label' => 'Catalog item', 'plural' => 'Catalog', 'resolve' => array( __CLASS__, 'resolve_catalog' ), 'search' => array( __CLASS__, 'search_catalog' ) ) );
+		Links::register_type( 'invoice', array( 'module' => 'finance', 'label' => 'Invoice', 'plural' => 'Invoices', 'resolve' => array( __CLASS__, 'resolve_invoice' ), 'search' => array( __CLASS__, 'search_invoices' ) ) );
+		Links::register_type( 'catalog_item', array( 'module' => 'finance', 'label' => 'Catalog item', 'plural' => 'Catalog', 'resolve' => array( __CLASS__, 'resolve_catalog' ), 'search' => array( __CLASS__, 'search_catalog' ) ) );
 	}
 
 	public static function resolve_invoice( $id ) {
@@ -360,9 +360,9 @@ class Integrations {
 	}
 
 
-	/* ---- the browser app: BizyMoney's settings, and money on the department pages ---- */
+	/* ---- the browser app: BizyFinance's settings, and money on the department pages ---- */
 
-	/** BizyMoney's settings reach the browser app in meta.settings: the safe ones for everybody, the full set for people who bill. */
+	/** BizyFinance's settings reach the browser app in meta.settings: the safe ones for everybody, the full set for people who bill. */
 	public static function meta( $m ) {
 		if ( ! self::on() ) {
 			return $m;
@@ -372,7 +372,7 @@ class Integrations {
 		foreach ( array( 'currencies', 'default_currency', 'base_currency', 'tax_label' ) as $k ) {
 			$pub[ $k ] = $own[ $k ];
 		}
-		if ( current_user_can( 'bizymoney_billing' ) || current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'bizyfinance_billing' ) || current_user_can( 'manage_options' ) ) {
 			$pub = array_intersect_key( $own, Settings::defaults() );
 		}
 		$m['settings'] = array_merge( isset( $m['settings'] ) ? (array) $m['settings'] : array(), $pub );
@@ -398,14 +398,14 @@ class Integrations {
 
 	public static function department_card( $card, $id, $from, $to ) {
 		if ( self::on() && self::fin() ) {
-			$card['modules']['money'] = self::dept_money( $id, $from, $to );
+			$card['modules']['finance'] = self::dept_money( $id, $from, $to );
 		}
 		return $card;
 	}
 
 	public static function department_detail( $data, $id, $from, $to ) {
 		if ( self::on() && self::fin() ) {
-			$data['modules']['money'] = self::dept_money( $id, $from, $to );
+			$data['modules']['finance'] = self::dept_money( $id, $from, $to );
 		}
 		return $data;
 	}
@@ -414,7 +414,7 @@ class Integrations {
 
 	public static function search( $out, $q ) {
 		global $wpdb;
-		if ( ! self::on() || ( ! current_user_can( 'bizymoney_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
+		if ( ! self::on() || ( ! current_user_can( 'bizyfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
 			return $out;
 		}
 		$like = '%' . $wpdb->esc_like( $q ) . '%';
@@ -449,7 +449,7 @@ class Integrations {
 	/** Home: money owed to the business, what to invoice, and overdue invoices to chase. */
 	public static function home( $home ) {
 		global $wpdb;
-		if ( ! self::on() || ( ! current_user_can( 'bizymoney_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
+		if ( ! self::on() || ( ! current_user_can( 'bizyfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
 			return $home;
 		}
 		$inv    = Schema::table( 'invoices' );
@@ -468,7 +468,7 @@ class Integrations {
 			$home['coming_up'][] = array( 'kind' => 'invoice', 'title' => $r['invoice_number'] . ' falls due', 'sub' => $r['client_name'], 'link' => '/billing/invoices/' . (int) $r['id'], 'days' => (int) floor( ( strtotime( $r['due_date'] ) - strtotime( $today ) ) / DAY_IN_SECONDS ) );
 		}
 		$home['setup'][] = array( 'key' => 'catalog', 'label' => 'Add what you sell to the catalog', 'to' => '/catalog', 'done' => (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Schema::table( 'catalog' ) ) > 0 ); // phpcs:ignore WordPress.DB
-		$home['setup'][] = array( 'key' => 'payment', 'label' => \BizyCore\Terminology::fmt( 'Add how {clients} can pay you' ), 'to' => '/settings?tab=money', 'done' => count( (array) Settings::get( 'payment_methods' ) ) > 0 );
+		$home['setup'][] = array( 'key' => 'payment', 'label' => \BizyCore\Terminology::fmt( 'Add how {clients} can pay you' ), 'to' => '/settings?tab=finance', 'done' => count( (array) Settings::get( 'payment_methods' ) ) > 0 );
 		return $home;
 	}
 }

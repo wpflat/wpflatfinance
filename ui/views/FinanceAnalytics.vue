@@ -82,10 +82,10 @@ const summaryCsv = () => {
 		</AnalyticsBar>
 
 		<el-alert v-if="combined" type="info" show-icon :closable="false" class="bd-mb" title="Combined figures are an estimate">
-			<template #default>Converted to {{ data.base }} at the rates set in <a href="#" @click.prevent="navigate( '/settings?tab=money' )">Settings → Currencies</a><template v-if="rateLine"> ({{ rateLine }})</template>.</template>
+			<template #default>Converted to {{ data.base }} at the rates set in <a href="#" @click.prevent="navigate( '/settings?tab=finance' )">Settings → Currencies</a><template v-if="rateLine"> ({{ rateLine }})</template>.</template>
 		</el-alert>
 		<el-alert v-if="data && data.missing.length" type="warning" show-icon :closable="false" class="bd-mb" :title="`No exchange rate for ${ data.missing.join( ', ' ) } — left out of the combined figures`">
-			<template #default><a href="#" @click.prevent="navigate( '/settings?tab=money' )">Add the rate in Settings → Currencies</a></template>
+			<template #default><a href="#" @click.prevent="navigate( '/settings?tab=finance' )">Add the rate in Settings → Currencies</a></template>
 		</el-alert>
 
 		<p v-if="empty && !loading" class="bd-muted">No income, costs or expenses in this period. Try a longer period.</p>

@@ -13,7 +13,7 @@ const PLACEHOLDERS = [ 'contact_name', 'client_name', 'invoice_number', 'invoice
 
 const load = async () => {
 	try {
-		Object.assign( form, await api.getPath( 'money/settings' ) );
+		Object.assign( form, await api.getPath( 'finance/settings' ) );
 		form.rates = form.rates && ! Array.isArray( form.rates ) ? form.rates : {};
 		( form.currencies || [] ).forEach( ( c ) => { if ( c.active === undefined ) c.active = true; } );
 		loaded.value = true;
@@ -27,7 +27,7 @@ onMounted( load );
 const save = async () => {
 	saving.value = true;
 	try {
-		Object.assign( form, await api.post( 'money/settings', { ...form } ) );
+		Object.assign( form, await api.post( 'finance/settings', { ...form } ) );
 		form.rates = form.rates && ! Array.isArray( form.rates ) ? form.rates : {};
 		store.meta = await api.getPath( 'meta' ); // pickers, prices and invoices pick up the new settings right away
 		ElMessage.success( 'Billing settings saved' );

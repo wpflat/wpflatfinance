@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v0.1.0 (it must match the "Version:" line in bizymoney.php) and this attaches an installable zip to a GitHub release.
+# Push a tag like v0.1.0 (it must match the "Version:" line in bizyfinance.php) and this attaches an installable zip to a GitHub release.
 on:
   push:
     tags: [ 'v*' ]
@@ -14,29 +14,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: bizymoney
+          path: bizyfinance
 
       - name: Check the tag matches the plugin version
         run: |
-          V=$(grep -m1 '^ \* Version:' bizymoney/bizymoney.php | awk '{print $3}')
+          V=$(grep -m1 '^ \* Version:' bizyfinance/bizyfinance.php | awk '{print $3}')
           if [ "v$V" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match Version: $V in bizymoney.php" >&2
+            echo "Tag $GITHUB_REF_NAME does not match Version: $V in bizyfinance.php" >&2
             exit 1
           fi
           echo "VERSION=$V" >> "$GITHUB_ENV"
 
       - name: Build the zip (the plugin folder, without development files)
         run: |
-          zip -rq "bizymoney-$VERSION.zip" bizymoney \
-            -x "bizymoney/.git/*" "bizymoney/.github/*" "bizymoney/.gitignore" "bizymoney/ui/*" "bizymoney/vite*.js" "bizymoney/package*.json" "bizymoney/API.md" \
-               "bizymoney/node_modules/*" "bizymoney/lib/dompdf/tests/*" '*.DS_Store'
-          cp "bizymoney-$VERSION.zip" bizymoney.zip   # a stable name, so .../releases/latest/download/bizymoney.zip always works
-          unzip -l bizymoney.zip | tail -1
+          zip -rq "bizyfinance-$VERSION.zip" bizyfinance \
+            -x "bizyfinance/.git/*" "bizyfinance/.github/*" "bizyfinance/.gitignore" "bizyfinance/ui/*" "bizyfinance/vite*.js" "bizyfinance/package*.json" "bizyfinance/API.md" \
+               "bizyfinance/node_modules/*" "bizyfinance/lib/dompdf/tests/*" '*.DS_Store'
+          cp "bizyfinance-$VERSION.zip" bizyfinance.zip   # a stable name, so .../releases/latest/download/bizyfinance.zip always works
+          unzip -l bizyfinance.zip | tail -1
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            bizymoney-${{ env.VERSION }}.zip
-            bizymoney.zip
+            bizyfinance-${{ env.VERSION }}.zip
+            bizyfinance.zip
           generate_release_notes: true

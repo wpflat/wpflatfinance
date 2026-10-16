@@ -1,15 +1,15 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * BizyMoney's settings: currencies, invoice numbering and wording, tax, payment methods. Anything else it asks for —
+ * BizyFinance's settings: currencies, invoice numbering and wording, tax, payment methods. Anything else it asks for —
  * the business name, logo, address — comes from BizyCore's settings, so the one business profile is shared.
  */
 class Settings {
 
-	const OPTION = 'bizymoney_settings';
+	const OPTION = 'bizyfinance_settings';
 
 	public static function defaults() {
 		return array(

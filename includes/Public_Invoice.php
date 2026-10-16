@@ -1,11 +1,11 @@
 <?php
-namespace BizyMoney;
+namespace BizyFinance;
 
 use BizyCore\Assets;
 
-use BizyMoney\Schema;
+use BizyFinance\Schema;
 use BizyCore\Services\Activity;
-use BizyMoney\Services\Invoices;
+use BizyFinance\Services\Invoices;
 
 defined( 'ABSPATH' ) || exit;
 
