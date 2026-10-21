@@ -29,6 +29,7 @@ sdk.registerFormatter( 'money', ( amount, currency ) => fmtMoney( amount, curren
 /** A route screen that shows one section of the money pages. */
 const money = ( section, sub = '' ) => ( { props: [ 'sub', 'section', 'query' ], render() { return h( Finance, { section: this.section || section, sub: this.sub || sub, query: this.query } ); } } );
 
+sdk.registerQuickAdd?.( M, [ { label: 'New invoice', route: '/billing/invoices/new' } ] );
 sdk.registerRoute( { path: '/finance', module: M, component: money( '' ) } );
 sdk.registerRoute( { path: '/finance/:section', module: M, component: money( '' ) } ); // overview, analytics, expenses, payroll
 sdk.registerRoute( { path: '/billing', module: M, component: money( 'billing' ) } );

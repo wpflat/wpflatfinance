@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WPFlat Finance
  * Description: The catalog, invoices, billing, payments, expenses, payroll and profit for the WPFlat suite. Needs WPFlat Core.
- * Version: 0.6.1
+ * Version: 0.7.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Digitalzooks
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'WPFLATFINANCE_VERSION', '0.6.1' );
+define( 'WPFLATFINANCE_VERSION', '0.7.0' );
 define( 'WPFLATFINANCE_FILE', __FILE__ );
 define( 'WPFLATFINANCE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WPFLATFINANCE_URL', plugin_dir_url( __FILE__ ) );
