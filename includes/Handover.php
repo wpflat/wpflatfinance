@@ -100,7 +100,7 @@ class Handover {
 		if ( get_role( 'wpflat_invoice_team' ) ) {
 			$new = get_role( 'wpflat_finance_team' );
 			if ( ! $new ) {
-				add_role( 'wpflat_finance_team', 'WPFlat Finance Team', (array) get_role( 'wpflat_invoice_team' )->capabilities );
+				add_role( 'wpflat_finance_team', 'Finance Team', (array) get_role( 'wpflat_invoice_team' )->capabilities );
 			}
 			foreach ( get_users( array( 'role' => 'wpflat_invoice_team', 'fields' => 'ID' ) ) as $uid ) {
 				$u = new \WP_User( (int) $uid );

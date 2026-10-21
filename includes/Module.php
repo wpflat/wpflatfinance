@@ -70,7 +70,7 @@ class Module {
 				'public_paths'  => array( 'invoice' ),
 				'public_params' => array( 'bd_invoice', 'bd_payslip' ),
 				'roles'         => array(
-					'wpflat_finance_team' => array( 'label' => 'WPFlat Finance Team', 'desc' => 'Billing, invoices, payments, expenses and payroll.', 'caps' => array( 'wpflatfinance_billing', 'wpflatfinance_finance' ) ),
+					'wpflat_finance_team' => array( 'label' => 'Finance Team', 'desc' => 'Billing, invoices, payments, expenses and payroll.', 'caps' => array( 'wpflatfinance_billing', 'wpflatfinance_finance' ) ),
 				),
 				'client_manager_caps' => array( 'wpflatfinance_billing' ),
 				'manager_grants'      => array(
