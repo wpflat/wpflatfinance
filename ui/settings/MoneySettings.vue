@@ -9,12 +9,27 @@ const loaded = ref( false );
 const saving = ref( false );
 const usage = ref( {} );
 const section = ref( 'general' );
+const REMIND_PH = [ 'contact_name', 'invoice_number', 'invoice_title', 'amount_due', 'due_date', 'due_phrase', 'business_name' ].map( ( k ) => '{' + '{' + k + '}' + '}' ).join( ' ' );
+const THANKS_PH = [ 'contact_name', 'invoice_number', 'invoice_title', 'payment_amount', 'payment_date', 'balance', 'balance_line', 'business_name' ].map( ( k ) => '{' + '{' + k + '}' + '}' ).join( ' ' );
+const WHEN = [ { v: 'before', l: 'before' }, { v: 'on', l: 'on the day' }, { v: 'after', l: 'after' } ];
+const UNITS = { days: 1440, hours: 60, minutes: 1 };
+/** Steps are stored as minutes from the start of the due date (negative = before). The screen shows days, or smaller units when they don't divide evenly. */
+const toRow = ( m ) => {
+	const mag = Math.abs( m );
+	const unit = mag === 0 || mag % 1440 === 0 ? 'days' : ( mag % 60 === 0 ? 'hours' : 'minutes' );
+	return { when: m < 0 ? 'before' : ( m > 0 ? 'after' : 'on' ), n: mag / UNITS[ unit ], unit };
+};
+const steps = ref( [] );
+const fromRow = ( r ) => ( 'on' === r.when ? 0 : ( 'before' === r.when ? -1 : 1 ) * Math.round( ( Number( r.n ) || 0 ) * UNITS[ r.unit ] ) );
+const addStep = () => steps.value.push( { when: 'after', n: 7, unit: 'days' } );
+const removeStep = ( i ) => steps.value.splice( i, 1 );
 const PLACEHOLDERS = [ 'contact_name', 'client_name', 'invoice_number', 'invoice_title', 'amount_due', 'total', 'due_date', 'issue_date', 'business_name' ].map( ( k ) => '{' + '{' + k + '}' + '}' ).join( ' ' );
 
 const load = async () => {
 	try {
 		Object.assign( form, await api.getPath( 'finance/settings' ) );
 		form.rates = form.rates && ! Array.isArray( form.rates ) ? form.rates : {};
+		steps.value = ( form.reminder_steps || [] ).map( toRow );
 		( form.currencies || [] ).forEach( ( c ) => { if ( c.active === undefined ) c.active = true; } );
 		loaded.value = true;
 		usage.value = await api.getPath( 'currencies/usage' );
@@ -27,7 +42,8 @@ onMounted( load );
 const save = async () => {
 	saving.value = true;
 	try {
-		Object.assign( form, await api.post( 'finance/settings', { ...form } ) );
+		Object.assign( form, await api.post( 'finance/settings', { ...form, reminder_steps: steps.value.map( fromRow ) } ) );
+		steps.value = ( form.reminder_steps || [] ).map( toRow );
 		form.rates = form.rates && ! Array.isArray( form.rates ) ? form.rates : {};
 		store.meta = await api.getPath( 'meta' ); // pickers, prices and invoices pick up the new settings right away
 		ElMessage.success( 'Billing settings saved' );
@@ -63,6 +79,7 @@ const methodTitle = ( m ) => m.title || ( m.type === 'bank' ? m.bank_name : '' )
 			<el-radio-button value="general">Numbering &amp; tax</el-radio-button>
 			<el-radio-button value="payments">Payment methods</el-radio-button>
 			<el-radio-button value="email">Invoice email</el-radio-button>
+			<el-radio-button value="reminders">Reminders &amp; thank-you</el-radio-button>
 			<el-radio-button value="currencies">Currencies</el-radio-button>
 		</el-radio-group>
 
@@ -150,6 +167,36 @@ const methodTitle = ( m ) => m.title || ( m.type === 'bank' ? m.bank_name : '' )
 					<div class="bd-help">Placeholders: {{ PLACEHOLDERS }}. You can still edit each email before sending. How emails are sent (SMTP) is set in the Email tab.</div>
 				</el-form-item>
 				<el-form-item><el-switch v-model="form.invoice_bcc_self" active-text="Send me a copy (Bcc) of every invoice email by default" /></el-form-item>
+			</el-form>
+			<el-button type="primary" :loading="saving" @click="save">Save settings</el-button>
+		</el-card>
+
+		<el-card v-show="section === 'reminders'" shadow="never">
+			<el-form label-position="top" style="max-width: 820px" @submit.prevent>
+				<h4 class="bd-subhead">Payment reminders</h4>
+				<el-form-item><el-switch v-model="form.reminders_on" active-text="Remind clients automatically about unpaid invoices" /></el-form-item>
+				<p class="bd-help">Reminders go to the same people as the invoice: the main contact in To, and the other contacts and team members who are copied on invoices in Cc. If an invoice has instalments, each reminder is about the next unpaid instalment. Checked once a day; each reminder is sent once.</p>
+				<div v-for="( r, i ) in steps" :key="i" style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px">
+					<el-input-number v-if="r.when !== 'on'" v-model="r.n" :min="1" :max="365" :controls="false" style="width: 80px" />
+					<el-select v-if="r.when !== 'on'" v-model="r.unit" style="width: 110px"><el-option value="days" label="days" /><el-option value="hours" label="hours" /><el-option value="minutes" label="minutes" /></el-select>
+					<el-select v-model="r.when" style="width: 130px"><el-option v-for="w in WHEN" :key="w.v" :value="w.v" :label="w.l" /></el-select>
+					<span class="bd-muted">the due date</span>
+					<el-button text type="danger" :icon="Delete" circle title="Remove" @click="removeStep( i )" />
+				</div>
+				<el-button :icon="Plus" class="bd-mb" @click="addStep">Add a reminder</el-button>
+				<el-form-item label="Subject"><el-input v-model="form.reminder_subject" /></el-form-item>
+				<el-form-item label="Message">
+					<el-input v-model="form.reminder_message" type="textarea" :rows="7" />
+					<div class="bd-help">Placeholders: {{ REMIND_PH }}. The payment details and a button to open the invoice are added under the message. You can also send a reminder by hand from any unpaid invoice.</div>
+				</el-form-item>
+				<h4 class="bd-subhead">Thank-you after a payment</h4>
+				<el-form-item><el-switch v-model="form.thanks_on" active-text="Email a thank-you when a payment is recorded" /></el-form-item>
+				<p class="bd-help">Sent to the same people as the invoice, saying what was received and what is left. Payments dated more than a week ago (for example when catching up old records) are not emailed.</p>
+				<el-form-item label="Subject"><el-input v-model="form.thanks_subject" /></el-form-item>
+				<el-form-item label="Message">
+					<el-input v-model="form.thanks_message" type="textarea" :rows="7" />
+					<div class="bd-help">Placeholders: {{ THANKS_PH }}.</div>
+				</el-form-item>
 			</el-form>
 			<el-button type="primary" :loading="saving" @click="save">Save settings</el-button>
 		</el-card>

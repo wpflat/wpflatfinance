@@ -280,6 +280,87 @@ class Invoice_Mail {
 		return $res + array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ) );
 	}
 
+	/** Tokens for a reminder: the next unpaid instalment's date and amount, and "is due today / was due on…". */
+	private static function reminder_tokens( array $d, array $to_names ) {
+		$inv    = $d['inv'];
+		$next   = self::next_due( $inv );
+		$ymd    = current_time( 'Y-m-d' );
+		$late   = $next['date'] && $next['date'] < $ymd;
+		$phrase = $late ? 'was due on ' . Email_Templates::date( $next['date'] ) : ( $next['date'] === $ymd ? 'is due today' : 'is due on ' . Email_Templates::date( $next['date'] ) );
+		return array( 'due_phrase' => $phrase, 'amount_due' => Email_Templates::money( $next['amount'], $inv['currency'] ), 'due_date' => Email_Templates::date( $next['date'] ) ) + self::tokens( $inv, $d['client'], $to_names );
+	}
+
+	/** What the "Send reminder" dialog pre-fills: the usual recipients and the reminder wording, placeholders filled in. */
+	public static function reminder_defaults( $invoice_id ) {
+		$d   = self::load( $invoice_id );
+		$def = self::defaults( $invoice_id );
+		if ( ! $d || ! $def ) {
+			return null;
+		}
+		$s      = Settings::get();
+		$tokens = self::reminder_tokens( $d, wp_list_pluck( $def['to'], 'name' ) );
+		$def['subject'] = self::fill( $s['reminder_subject'], $tokens );
+		$def['message'] = self::fill( $s['reminder_message'], $tokens );
+		return $def;
+	}
+
+	/**
+	 * Thank-you email after a payment: same people as the invoice, says what was received and what is left.
+	 *
+	 * @return array|\WP_Error|null Null when thank-you emails are switched off.
+	 */
+	public static function send_thanks( $payment_id ) {
+		global $wpdb;
+		$s = Settings::get();
+		if ( empty( $s['thanks_on'] ) ) {
+			return null;
+		}
+		$pay = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Schema::table( 'payments' ) . ' WHERE id=%d', $payment_id ), ARRAY_A ); // phpcs:ignore WordPress.DB
+		$d   = $pay ? self::load( $pay['invoice_id'] ) : null;
+		if ( ! $d || (float) $pay['amount'] <= 0 ) {
+			return null;
+		}
+		$inv = $d['inv'];
+		if ( in_array( $inv['status'], array( 'draft', 'cancelled' ), true ) ) {
+			return null;
+		}
+		$def = self::defaults( $inv['id'] );
+		$to  = self::clean_list( $def['to'] );
+		$cc  = self::clean_list( $def['cc'] );
+		if ( is_wp_error( $to ) || is_wp_error( $cc ) || ! $to ) {
+			return null; // nobody to thank: the payment is still recorded
+		}
+		$bal  = max( 0, round( (float) $inv['amount'] - (float) $inv['amount_paid'], 2 ) );
+		$next = self::next_due( $inv );
+		$cur  = $pay['currency'] ? $pay['currency'] : $inv['currency'];
+		$tokens = array(
+			'payment_amount' => Email_Templates::money( $pay['amount'], $cur ),
+			'payment_date'   => Email_Templates::date( $pay['paid_on'] ),
+			'balance'        => Email_Templates::money( $bal, $inv['currency'] ),
+			'balance_line'   => $bal <= 0.004 ? 'Invoice ' . $inv['invoice_number'] . ' is now paid in full.' : sprintf( 'The remaining balance is %s%s.', Email_Templates::money( $bal, $inv['currency'] ), $next['date'] ? ', next due ' . Email_Templates::date( $next['date'] ) : '' ),
+		) + self::tokens( $inv, $d['client'], wp_list_pluck( $to, 'name' ) );
+		$r       = Email_Templates::invoice( array( 'inv' => $inv, 'client' => $d['client'], 'items' => $d['items'], 'schedule' => $d['schedule'], 'message' => self::fill( $s['thanks_message'], $tokens ), 'link' => $tokens['invoice_link'], 'test_note' => '', 'business' => $s ) );
+		$subject = self::fill( $s['thanks_subject'], $tokens );
+		$in_to   = array_map( 'strtolower', self::addr( $to ) );
+		$cc      = array_values( array_filter( $cc, function ( $c ) use ( $in_to ) {
+			return ! in_array( strtolower( $c['email'] ), $in_to, true );
+		} ) );
+		$res = Mailer::send( array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject, 'html' => $r['html'], 'text' => $r['text'] ) );
+		self::log( $inv, 'thanks', $to, $cc, array(), $subject, $res );
+		if ( $res['ok'] ) {
+			Activity::log( 'invoices', $inv['id'], $inv['client_id'], 'thanked', sprintf( 'Thank-you for the payment on invoice %s emailed to %s', $inv['invoice_number'], implode( ', ', self::addr( $to ) ) ) );
+		}
+		return $res + array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ) );
+	}
+
+	/** After a new payment is recorded (not for edits, old back-dated entries or imports), thank the client. */
+	public static function on_payment_saved( $row, $existing ) {
+		if ( $existing || empty( $row['id'] ) || ! empty( $row['paid_on'] ) && strtotime( $row['paid_on'] ) < current_time( 'timestamp' ) - 7 * DAY_IN_SECONDS ) {
+			return;
+		}
+		self::send_thanks( (int) $row['id'] );
+	}
+
 	/** The next date money is expected (the first unpaid instalment, else the invoice due date) and what is owed by then. */
 	public static function next_due( array $inv ) {
 		foreach ( Invoices::schedule( $inv ) as $row ) {
@@ -323,25 +404,21 @@ class Invoice_Mail {
 		} ) );
 
 		$s      = Settings::get();
-		$next   = self::next_due( $inv );
-		$ymd    = current_time( 'Y-m-d' );
-		$late   = $next['date'] && $next['date'] < $ymd;
-		$phrase = $late ? 'was due on ' . Email_Templates::date( $next['date'] ) : ( $next['date'] === $ymd ? 'is due today' : 'is due on ' . Email_Templates::date( $next['date'] ) );
 		$names  = wp_list_pluck( $to, 'name' );
-		$tokens = array( 'due_phrase' => $phrase, 'amount_due' => Email_Templates::money( $next['amount'], $inv['currency'] ), 'due_date' => Email_Templates::date( $next['date'] ) ) + self::tokens( $inv, $d['client'], $names );
+		$tokens = self::reminder_tokens( $d, $names );
 		$r      = Email_Templates::invoice(
 			array(
 				'inv'       => $inv,
 				'client'    => $d['client'],
 				'items'     => $d['items'],
 				'schedule'  => $d['schedule'],
-				'message'   => self::fill( $s['reminder_message'], $tokens ),
+				'message'   => self::fill( isset( $over['message'] ) ? (string) $over['message'] : $s['reminder_message'], $tokens ),
 				'link'      => $tokens['invoice_link'],
 				'test_note' => '',
 				'business'  => $s,
 			)
 		);
-		$subject = self::fill( $s['reminder_subject'], $tokens );
+		$subject = self::fill( isset( $over['subject'] ) && '' !== trim( (string) $over['subject'] ) ? (string) $over['subject'] : $s['reminder_subject'], $tokens );
 		$res     = Mailer::send( array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject, 'html' => $r['html'], 'text' => $r['text'] ) );
 		self::log( $inv, 'reminder', $to, $cc, array(), $subject, $res );
 		if ( $res['ok'] ) {

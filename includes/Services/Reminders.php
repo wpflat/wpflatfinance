@@ -17,6 +17,7 @@ class Reminders {
 
 	public static function init() {
 		add_action( 'wpflatcore_daily', array( __CLASS__, 'run' ), 20 );
+		add_action( 'wpflatfinance_payment_saved', array( Invoice_Mail::class, 'on_payment_saved' ), 10, 2 );
 	}
 
 	/** @param int|null $now Unix time to act as "now" (tests). @return array What was sent. */

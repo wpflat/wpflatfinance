@@ -37,6 +37,7 @@ class Routes {
 		self::reg( '/invoices/(?P<id>\d+)/email-defaults', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'email_defaults' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/email-preview', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'email_preview' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/send', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'email_send' ), 'permission_callback' => $perm ) );
+		self::reg( '/invoices/(?P<id>\d+)/reminder-defaults', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'reminder_defaults' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/remind', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'email_remind' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/emails', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'email_history' ), 'permission_callback' => $perm ) );
 		self::reg( '/expenses/summary', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \WPFlatFinance\Services\Expenses::summary() ); }, 'permission_callback' => $fin ) );
@@ -185,6 +186,11 @@ class Routes {
 		$names = is_wp_error( $to ) ? array() : wp_list_pluck( $to, 'name' );
 		$r     = Invoice_Mail::render( (int) $req['id'], isset( $p['subject'] ) ? (string) $p['subject'] : '', isset( $p['message'] ) ? (string) $p['message'] : '', $names );
 		return $r ? rest_ensure_response( array( 'html' => $r['html'], 'subject' => $r['subject'] ) ) : new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+	}
+
+	public static function reminder_defaults( \WP_REST_Request $req ) {
+		$d = Invoice_Mail::reminder_defaults( (int) $req['id'] );
+		return $d ? rest_ensure_response( $d ) : new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 	}
 
 	public static function email_remind( \WP_REST_Request $req ) {

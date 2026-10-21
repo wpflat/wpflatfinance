@@ -53,6 +53,8 @@ const bills = ref( [] );
 const pickedBills = ref( [] );
 const svcPick = ref( 0 );
 const sendOpen = ref( false );
+const remindOpen = ref( false );
+const canRemind = computed( () => [ 'sent', 'due', 'partially_paid', 'overdue' ].includes( inv.status ) && Number( inv.balance ) > 0 );
 const emails = ref( [] );
 
 /* ───────────── load ───────────── */
@@ -118,6 +120,7 @@ const onSent = async () => {
 };
 const MAIL_TONE = { sent: 'success', test: 'neutral', failed: 'danger' };
 const MAIL_LABEL = { sent: 'Sent', test: 'Test', failed: 'Failed' };
+const MAIL_TYPE = { reminder: 'Reminder', thanks: 'Thank-you', test: 'Test' };
 
 /* ───────────── totals ───────────── */
 const totals = computed( () => {
@@ -616,11 +619,11 @@ const locked = computed( () => [ 'cancelled' ].includes( inv.status ) );
 				</el-card>
 
 				<el-card v-if="!isNew" shadow="never" class="bd-mb">
-					<template #header><div class="bd-widget__head"><span>Emails</span><a href="#" @click.prevent="sendOpen = true">Send</a></div></template>
+					<template #header><div class="bd-widget__head"><span>Emails</span><span><a v-if="canRemind" href="#" @click.prevent="remindOpen = true">Send reminder</a><a href="#" style="margin-left: 12px" @click.prevent="sendOpen = true">Send</a></span></div></template>
 					<ul v-if="emails.length" class="bd-list">
 						<li v-for="m in emails" :key="m.id">
 							<div>
-								<div class="bd-strong">{{ m.subject }}</div>
+								<div class="bd-strong">{{ m.subject }}<span v-if="MAIL_TYPE[ m.type ] && m.type !== 'test'" class="bd-badge bd-badge--neutral" style="margin-left: 8px">{{ MAIL_TYPE[ m.type ] }}</span></div>
 								<div class="bd-muted bd-small">To {{ m.to_emails }}<template v-if="m.cc_emails"> · Cc {{ m.cc_emails }}</template></div>
 								<div v-if="m.error" class="bd-late bd-small">{{ m.error }}</div>
 							</div>
@@ -655,6 +658,7 @@ const locked = computed( () => [ 'cancelled' ].includes( inv.status ) );
 		</el-dialog>
 
 		<SendInvoiceDialog v-model="sendOpen" :invoice-id="Number( inv.id )" @sent="onSent" />
+		<SendInvoiceDialog v-model="remindOpen" mode="reminder" :invoice-id="Number( inv.id )" @sent="onSent" />
 		<PaymentsDialog v-model="paying" :invoice-id="Number( inv.id )" @changed="load" />
 	</div>
 </template>

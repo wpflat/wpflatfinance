@@ -3,7 +3,8 @@ import { computed, reactive, ref, watch } from 'vue';
 import { ElMessage, sdk, api, errorMessage, store } from '../core';
 import { Promotion, Message } from '@element-plus/icons-vue';
 
-const props = defineProps( { modelValue: Boolean, invoiceId: { type: Number, default: 0 } } );
+const props = defineProps( { modelValue: Boolean, invoiceId: { type: Number, default: 0 }, mode: { type: String, default: 'invoice' } } );
+const isReminder = computed( () => props.mode === 'reminder' );
 const emit = defineEmits( [ 'update:modelValue', 'sent' ] );
 
 const PH_EXAMPLE = '{' + '{contact_name}} and {' + '{amount_due}}';
@@ -43,7 +44,7 @@ const load = async () => {
 	error.value = '';
 	info.value = '';
 	try {
-		const d = await api.getPath( `invoices/${ props.invoiceId }/email-defaults` );
+		const d = await api.getPath( `invoices/${ props.invoiceId }/${ isReminder.value ? 'reminder-defaults' : 'email-defaults' }` );
 		defaults.value = d;
 		form.to = d.to.map( ( p ) => p.email );
 		form.cc = d.cc.map( ( p ) => p.email );
@@ -90,8 +91,8 @@ const send = async () => {
 	sending.value = true;
 	error.value = '';
 	try {
-		const r = await api.post( `invoices/${ props.invoiceId }/send`, payload() );
-		ElMessage.success( `Invoice emailed to ${ r.to.join( ', ' ) }${ r.cc && r.cc.length ? ` (cc ${ r.cc.length })` : '' }` );
+		const r = await api.post( `invoices/${ props.invoiceId }/${ isReminder.value ? 'remind' : 'send' }`, payload() );
+		ElMessage.success( `${ isReminder.value ? 'Reminder' : 'Invoice' } emailed to ${ r.to.join( ', ' ) }${ r.cc && r.cc.length ? ` (cc ${ r.cc.length })` : '' }` );
 		emit( 'update:modelValue', false );
 		emit( 'sent', r );
 	} catch ( e ) {
@@ -129,7 +130,7 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 	<el-drawer :model-value="modelValue" size="1040px" append-to-body destroy-on-close :close-on-click-modal="false" @update:model-value="emit( 'update:modelValue', $event )">
 		<template #header>
 			<div>
-				<div class="bd-eyebrow">Email invoice</div>
+				<div class="bd-eyebrow">{{ isReminder ? 'Send payment reminder' : 'Email invoice' }}</div>
 				<h3 class="bd-drawer-title">{{ defaults ? defaults.invoice_number : 'Invoice' }}<span v-if="defaults" class="bd-muted"> · {{ defaults.client_name }}</span></h3>
 			</div>
 		</template>
@@ -160,9 +161,10 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 
 				<label class="bd-lab bd-mt">Message</label>
 				<el-input v-model="form.message" type="textarea" :rows="9" />
-				<div class="bd-help">Placeholders such as {{ PH_EXAMPLE }} are filled in for you. Edit the default wording in Settings → Email.</div>
+				<div v-if="isReminder" class="bd-help">The payment details and a button to open the invoice are added under your message. Edit the default wording in Settings → Billing → Reminders.</div>
+				<div v-else class="bd-help">Placeholders such as {{ PH_EXAMPLE }} are filled in for you. Edit the default wording in Settings → Email.</div>
 
-				<el-checkbox v-model="form.bcc_self" class="bd-mt">Send me a copy (Bcc)</el-checkbox>
+				<el-checkbox v-if="!isReminder" v-model="form.bcc_self" class="bd-mt">Send me a copy (Bcc)</el-checkbox>
 			</div>
 
 			<div class="bd-send__preview">
@@ -173,13 +175,13 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 
 		<template #footer>
 			<div class="bd-send__foot">
-				<div class="bd-send__test">
+				<div v-if="!isReminder" class="bd-send__test">
 					<el-input v-model="testTo" placeholder="you@yourcompany.com" size="default" style="width: 240px" aria-label="Send a test to" />
 					<el-button :icon="Message" :loading="testing" :disabled="!testTo" @click="sendTest">Send test</el-button>
 				</div>
 				<div>
 					<el-button @click="emit( 'update:modelValue', false )">Cancel</el-button>
-					<el-button type="primary" :icon="Promotion" :loading="sending" :disabled="!form.to.length" @click="send">Send invoice</el-button>
+					<el-button type="primary" :icon="Promotion" :loading="sending" :disabled="!form.to.length" @click="send">{{ isReminder ? 'Send reminder' : 'Send invoice' }}</el-button>
 				</div>
 			</div>
 		</template>

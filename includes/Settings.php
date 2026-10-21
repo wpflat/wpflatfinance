@@ -37,6 +37,9 @@ class Settings {
 			'invoice_subject'   => 'Invoice {{invoice_number}} — {{invoice_title}}',
 			'invoice_message'   => "Hi {{contact_name}},\n\nPlease find invoice {{invoice_number}} for {{invoice_title}}. The amount due is {{amount_due}}, payable by {{due_date}}.\n\nYou can view it online, print it or save it as a PDF using the button below. If you have any questions, just reply to this email.\n\nThank you,\n{{business_name}}",
 			'invoice_bcc_self'  => false,
+			'thanks_on'         => true,
+			'thanks_subject'    => 'Payment received for invoice {{invoice_number}}, thank you',
+			'thanks_message'    => "Hi {{contact_name}},\n\nThank you. We received your payment of {{payment_amount}} on {{payment_date}} for invoice {{invoice_number}} ({{invoice_title}}).\n\n{{balance_line}}\n\nThank you,\n{{business_name}}",
 			'reminders_on'      => false,
 			'reminder_steps'    => array( -4320, 0, 4320, 10080 ),
 			'reminder_subject'  => 'Reminder: invoice {{invoice_number}} {{due_phrase}}',
@@ -143,6 +146,15 @@ class Settings {
 			if ( isset( $in[ $k ] ) ) {
 				$out[ $k ] = sanitize_textarea_field( $in[ $k ] );
 			}
+		}
+		if ( isset( $in['thanks_on'] ) ) {
+			$out['thanks_on'] = (bool) $in['thanks_on'];
+		}
+		if ( isset( $in['thanks_subject'] ) ) {
+			$out['thanks_subject'] = trim( str_replace( array( "\r", "\n" ), ' ', sanitize_text_field( $in['thanks_subject'] ) ) );
+		}
+		if ( isset( $in['thanks_message'] ) ) {
+			$out['thanks_message'] = sanitize_textarea_field( $in['thanks_message'] );
 		}
 		if ( isset( $in['reminders_on'] ) ) {
 			$out['reminders_on'] = (bool) $in['reminders_on'];
