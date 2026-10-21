@@ -26,6 +26,7 @@ class Module {
 		add_action( 'wpflatcore_daily', array( __CLASS__, 'daily' ), 10 );
 		Integrations::init();
 		Notify::init();
+		Services\Reminders::init();
 		Legacy::init();
 		Demo::init();
 		if ( Registry::enabled( 'finance' ) || ! did_action( 'wpflatcore_ready' ) ) {

@@ -37,6 +37,10 @@ class Settings {
 			'invoice_subject'   => 'Invoice {{invoice_number}} — {{invoice_title}}',
 			'invoice_message'   => "Hi {{contact_name}},\n\nPlease find invoice {{invoice_number}} for {{invoice_title}}. The amount due is {{amount_due}}, payable by {{due_date}}.\n\nYou can view it online, print it or save it as a PDF using the button below. If you have any questions, just reply to this email.\n\nThank you,\n{{business_name}}",
 			'invoice_bcc_self'  => false,
+			'reminders_on'      => false,
+			'reminder_steps'    => array( -4320, 0, 4320, 10080 ),
+			'reminder_subject'  => 'Reminder: invoice {{invoice_number}} {{due_phrase}}',
+			'reminder_message'  => "Hi {{contact_name}},\n\nThis is a friendly reminder that invoice {{invoice_number}} for {{invoice_title}} {{due_phrase}}. The amount still to pay is {{amount_due}}.\n\nThe payment details are below, and you can view or print the invoice with the button. If you have already paid, thank you, and please ignore this email.\n\nThank you,\n{{business_name}}",
 		);
 	}
 
@@ -139,6 +143,20 @@ class Settings {
 			if ( isset( $in[ $k ] ) ) {
 				$out[ $k ] = sanitize_textarea_field( $in[ $k ] );
 			}
+		}
+		if ( isset( $in['reminders_on'] ) ) {
+			$out['reminders_on'] = (bool) $in['reminders_on'];
+		}
+		if ( isset( $in['reminder_steps'] ) && is_array( $in['reminder_steps'] ) ) {
+			$steps = array_values( array_unique( array_map( 'intval', array_slice( $in['reminder_steps'], 0, 12 ) ) ) );
+			sort( $steps );
+			$out['reminder_steps'] = $steps;
+		}
+		if ( isset( $in['reminder_subject'] ) ) {
+			$out['reminder_subject'] = trim( str_replace( array( "\r", "\n" ), ' ', sanitize_text_field( $in['reminder_subject'] ) ) );
+		}
+		if ( isset( $in['reminder_message'] ) ) {
+			$out['reminder_message'] = sanitize_textarea_field( $in['reminder_message'] );
 		}
 		if ( isset( $in['invoice_bcc_self'] ) ) {
 			$out['invoice_bcc_self'] = (bool) $in['invoice_bcc_self'];

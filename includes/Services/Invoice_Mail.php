@@ -280,6 +280,76 @@ class Invoice_Mail {
 		return $res + array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ) );
 	}
 
+	/** The next date money is expected (the first unpaid instalment, else the invoice due date) and what is owed by then. */
+	public static function next_due( array $inv ) {
+		foreach ( Invoices::schedule( $inv ) as $row ) {
+			if ( $row['balance'] > 0.004 && ! empty( $row['due_date'] ) ) {
+				return array( 'date' => $row['due_date'], 'amount' => $row['balance'], 'label' => $row['implicit'] ? '' : $row['label'] );
+			}
+		}
+		return array( 'date' => $inv['due_date'], 'amount' => max( 0, (float) $inv['amount'] - (float) $inv['amount_paid'] ), 'label' => '' );
+	}
+
+	/**
+	 * Email a payment reminder for an unpaid invoice to the same people the invoice goes to (main contact in To, other
+	 * contacts and flagged team members in Cc). The wording comes from Settings (reminder_subject / reminder_message).
+	 *
+	 * @param array $over Optional to[], cc[] to use instead of the client's contacts.
+	 * @return array|\WP_Error
+	 */
+	public static function send_reminder( $invoice_id, array $over = array() ) {
+		$d = self::load( $invoice_id );
+		if ( ! $d ) {
+			return new \WP_Error( 'wpflatfinance_not_found', 'Invoice not found.', array( 'status' => 404 ) );
+		}
+		$inv = $d['inv'];
+		if ( (float) $inv['amount'] - (float) $inv['amount_paid'] <= 0.004 || in_array( $inv['status'], array( 'draft', 'cancelled', 'paid' ), true ) ) {
+			return new \WP_Error( 'wpflatfinance_invalid', 'Only a sent invoice with a balance still to pay can be reminded.', array( 'status' => 400 ) );
+		}
+		$def = self::defaults( $invoice_id );
+		$to  = self::clean_list( isset( $over['to'] ) ? $over['to'] : $def['to'] );
+		$cc  = self::clean_list( isset( $over['cc'] ) ? $over['cc'] : $def['cc'] );
+		foreach ( array( $to, $cc ) as $l ) {
+			if ( is_wp_error( $l ) ) {
+				return $l;
+			}
+		}
+		if ( ! $to ) {
+			return new \WP_Error( 'wpflatfinance_invalid', 'This client has no contact with an email address to remind.', array( 'status' => 400 ) );
+		}
+		$in_to = array_map( 'strtolower', self::addr( $to ) );
+		$cc    = array_values( array_filter( $cc, function ( $c ) use ( $in_to ) {
+			return ! in_array( strtolower( $c['email'] ), $in_to, true );
+		} ) );
+
+		$s      = Settings::get();
+		$next   = self::next_due( $inv );
+		$ymd    = current_time( 'Y-m-d' );
+		$late   = $next['date'] && $next['date'] < $ymd;
+		$phrase = $late ? 'was due on ' . Email_Templates::date( $next['date'] ) : ( $next['date'] === $ymd ? 'is due today' : 'is due on ' . Email_Templates::date( $next['date'] ) );
+		$names  = wp_list_pluck( $to, 'name' );
+		$tokens = array( 'due_phrase' => $phrase, 'amount_due' => Email_Templates::money( $next['amount'], $inv['currency'] ), 'due_date' => Email_Templates::date( $next['date'] ) ) + self::tokens( $inv, $d['client'], $names );
+		$r      = Email_Templates::invoice(
+			array(
+				'inv'       => $inv,
+				'client'    => $d['client'],
+				'items'     => $d['items'],
+				'schedule'  => $d['schedule'],
+				'message'   => self::fill( $s['reminder_message'], $tokens ),
+				'link'      => $tokens['invoice_link'],
+				'test_note' => '',
+				'business'  => $s,
+			)
+		);
+		$subject = self::fill( $s['reminder_subject'], $tokens );
+		$res     = Mailer::send( array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject, 'html' => $r['html'], 'text' => $r['text'] ) );
+		self::log( $inv, 'reminder', $to, $cc, array(), $subject, $res );
+		if ( $res['ok'] ) {
+			Activity::log( 'invoices', $inv['id'], $inv['client_id'], 'reminded', sprintf( 'Reminder for invoice %s emailed to %s%s', $inv['invoice_number'], implode( ', ', self::addr( $to ) ), $cc ? ' (cc ' . implode( ', ', self::addr( $cc ) ) . ')' : '' ) );
+		}
+		return $res + array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject );
+	}
+
 	public static function history( $invoice_id ) {
 		global $wpdb;
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . Schema::table( 'email_log' ) . ' WHERE invoice_id=%d ORDER BY id DESC LIMIT 50', $invoice_id ), ARRAY_A ); // phpcs:ignore WordPress.DB
