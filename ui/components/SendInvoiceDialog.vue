@@ -150,6 +150,7 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 
 				<div v-if="!defaults.from_options || defaults.from_options.length < 2" class="bd-send__from bd-muted bd-small">
 					From <strong>{{ defaults.from.name }} &lt;{{ defaults.from.email }}&gt;</strong> · via {{ defaults.method === 'smtp' ? 'WPFlat SMTP' : 'the site mailer' }}
+					<div v-if="defaults.from_note" class="bd-help">{{ defaults.from_note }}</div>
 				</div>
 				<template v-else>
 					<label class="bd-lab">From <span class="bd-muted">— via {{ defaults.method === 'smtp' ? 'WPFlat SMTP' : 'the site mailer' }}</span></label>

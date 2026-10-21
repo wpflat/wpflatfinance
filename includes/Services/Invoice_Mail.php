@@ -124,6 +124,7 @@ class Invoice_Mail {
 			'message'        => self::fill( $m['invoice_message'], $tokens ),
 			'from'           => Mail_Settings::from(),
 			'from_options'   => Mail_Settings::sender_choices(),
+			'from_note'      => Mail_Settings::own_address_note(),
 			'method'         => $m['method'],
 			'bcc_self'       => (bool) $m['bcc_self'],
 			'user_email'     => $user ? $user->user_email : '',

@@ -1,6 +1,6 @@
 {
   "name": "wpflatfinance",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "type": "module",
   "description": "Catalog, subscriptions and renewals, invoices, payments, expenses, payroll and profit for the WPFlat suite, with public invoice and payslip pages.",
