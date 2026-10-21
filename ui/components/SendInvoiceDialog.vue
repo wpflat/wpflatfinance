@@ -14,7 +14,7 @@ const testing = ref( false );
 const error = ref( '' );
 const info = ref( '' );
 const defaults = ref( null );
-const form = reactive( { to: [], cc: [], bcc: [], subject: '', message: '', bcc_self: false } );
+const form = reactive( { to: [], cc: [], bcc: [], subject: '', message: '', bcc_self: false, from_email: '' } );
 const testTo = ref( '' );
 const previewHtml = ref( '' );
 let timer = null;
@@ -52,6 +52,11 @@ const load = async () => {
 		form.subject = d.subject;
 		form.message = d.message;
 		form.bcc_self = d.bcc_self;
+		form.from_email = '';
+		try {
+			const me = ( d.from_options || [] ).find( ( o ) => o.key === 'me' );
+			if ( me && window.localStorage.getItem( 'bd-send-as' ) === 'me' ) form.from_email = me.email;
+		} catch ( e ) { /* remembering the choice is optional */ }
 		testTo.value = d.user_email || store.userEmail || '';
 		await refreshPreview();
 	} catch ( e ) {
@@ -85,13 +90,14 @@ watch( () => [ form.subject, form.message, form.to.join( ',' ) ], () => {
 	timer = setTimeout( refreshPreview, 450 );
 } );
 
-const payload = () => ( { to: objs( form.to ), cc: objs( form.cc ), bcc: objs( form.bcc ), subject: form.subject, message: form.message, bcc_self: form.bcc_self } );
+const payload = () => ( { to: objs( form.to ), cc: objs( form.cc ), bcc: objs( form.bcc ), subject: form.subject, message: form.message, bcc_self: form.bcc_self, from_email: form.from_email } );
 
 const send = async () => {
 	sending.value = true;
 	error.value = '';
 	try {
 		const r = await api.post( `invoices/${ props.invoiceId }/${ isReminder.value ? 'remind' : 'send' }`, payload() );
+		try { window.localStorage.setItem( 'bd-send-as', form.from_email ? 'me' : 'default' ); } catch ( e ) { /* optional */ }
 		ElMessage.success( `${ isReminder.value ? 'Reminder' : 'Invoice' } emailed to ${ r.to.join( ', ' ) }${ r.cc && r.cc.length ? ` (cc ${ r.cc.length })` : '' }` );
 		emit( 'update:modelValue', false );
 		emit( 'sent', r );
@@ -142,9 +148,16 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 				<el-alert v-if="info" :title="info" type="success" show-icon :closable="false" class="bd-mb" />
 				<el-alert v-if="noRecipient" type="warning" show-icon :closable="false" class="bd-mb" title="No recipient yet" :description="$fmt( 'This {client} has no primary contact with an email. Add one under {Clients} → Contacts, or type an address below.' )" />
 
-				<div class="bd-send__from bd-muted bd-small">
+				<div v-if="!defaults.from_options || defaults.from_options.length < 2" class="bd-send__from bd-muted bd-small">
 					From <strong>{{ defaults.from.name }} &lt;{{ defaults.from.email }}&gt;</strong> · via {{ defaults.method === 'smtp' ? 'WPFlat SMTP' : 'the site mailer' }}
 				</div>
+				<template v-else>
+					<label class="bd-lab">From <span class="bd-muted">— via {{ defaults.method === 'smtp' ? 'WPFlat SMTP' : 'the site mailer' }}</span></label>
+					<el-select v-model="form.from_email" style="width: 100%" aria-label="Send from">
+						<el-option v-for="o in defaults.from_options" :key="o.key" :value="o.key === 'default' ? '' : o.email" :label="o.label" />
+					</el-select>
+					<div class="bd-help">Pick your own address to send as yourself; replies then come to you. It is offered because it is on the same domain as the email settings.</div>
+				</template>
 
 				<label class="bd-lab">To <span class="bd-muted">— primary contacts</span></label>
 				<el-select v-model="form.to" multiple filterable allow-create default-first-option :reserve-keyword="false" placeholder="Add recipients" style="width: 100%">

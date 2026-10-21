@@ -123,6 +123,7 @@ class Invoice_Mail {
 			'subject'        => self::fill( $m['invoice_subject'], $tokens ),
 			'message'        => self::fill( $m['invoice_message'], $tokens ),
 			'from'           => Mail_Settings::from(),
+			'from_options'   => Mail_Settings::sender_choices(),
 			'method'         => $m['method'],
 			'bcc_self'       => (bool) $m['bcc_self'],
 			'user_email'     => $user ? $user->user_email : '',
@@ -238,7 +239,7 @@ class Invoice_Mail {
 			}
 			$note = sprintf( 'Nothing was sent to %s. This is how the invoice will look.', $real_to ? implode( ', ', self::addr( $real_to ) ) : 'your client' );
 			$r    = self::render( $invoice_id, $subject, $message, wp_list_pluck( $real_to, 'name' ), $note );
-			$res  = Mailer::send( array( 'to' => self::addr( $test ), 'subject' => $r['subject'], 'html' => $r['html'], 'text' => $r['text'] ) );
+			$res  = Mailer::send( array( 'from_email' => isset( $p['from_email'] ) ? (string) $p['from_email'] : '', 'to' => self::addr( $test ), 'subject' => $r['subject'], 'html' => $r['html'], 'text' => $r['text'] ) );
 			self::log( $inv, 'test', $test, array(), array(), $r['subject'], $res );
 			if ( $res['ok'] ) {
 				Activity::log( 'invoices', $inv['id'], $inv['client_id'], 'test_email', sprintf( 'Test email for invoice %s sent to %s', $inv['invoice_number'], $test[0]['email'] ) );
@@ -268,7 +269,7 @@ class Invoice_Mail {
 		} ) );
 
 		$r   = self::render( $invoice_id, $subject, $message, wp_list_pluck( $to, 'name' ) );
-		$res = Mailer::send( array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'bcc' => self::addr( $bcc ), 'subject' => $r['subject'], 'html' => $r['html'], 'text' => $r['text'] ) );
+		$res = Mailer::send( array( 'from_email' => isset( $p['from_email'] ) ? (string) $p['from_email'] : '', 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'bcc' => self::addr( $bcc ), 'subject' => $r['subject'], 'html' => $r['html'], 'text' => $r['text'] ) );
 		self::log( $inv, 'invoice', $to, $cc, $bcc, $r['subject'], $res );
 
 		if ( $res['ok'] ) {
@@ -419,7 +420,7 @@ class Invoice_Mail {
 			)
 		);
 		$subject = self::fill( isset( $over['subject'] ) && '' !== trim( (string) $over['subject'] ) ? (string) $over['subject'] : $s['reminder_subject'], $tokens );
-		$res     = Mailer::send( array( 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject, 'html' => $r['html'], 'text' => $r['text'] ) );
+		$res     = Mailer::send( array( 'from_email' => isset( $over['from_email'] ) ? (string) $over['from_email'] : '', 'to' => self::addr( $to ), 'cc' => self::addr( $cc ), 'subject' => $subject, 'html' => $r['html'], 'text' => $r['text'] ) );
 		self::log( $inv, 'reminder', $to, $cc, array(), $subject, $res );
 		if ( $res['ok'] ) {
 			Activity::log( 'invoices', $inv['id'], $inv['client_id'], 'reminded', sprintf( 'Reminder for invoice %s emailed to %s%s', $inv['invoice_number'], implode( ', ', self::addr( $to ) ), $cc ? ' (cc ' . implode( ', ', self::addr( $cc ) ) . ')' : '' ) );
