@@ -90,7 +90,7 @@ class Invoice_Mail {
 			$cc[] = $c + array( 'source' => 'contact' );
 		}
 		foreach ( $team as $t ) {
-			if ( (int) $t['cc_invoices'] && ! in_array( strtolower( $t['email'] ), $to_emails, true ) ) {
+			if ( (int) $t['cc_documents'] && ! in_array( strtolower( $t['email'] ), $to_emails, true ) ) {
 				$cc[] = array( 'name' => $t['name'], 'email' => $t['email'], 'job_title' => $t['role'], 'source' => 'team' );
 			}
 		}
