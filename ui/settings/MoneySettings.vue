@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { ArrowDown, ArrowUp, Delete, Plus } from '@element-plus/icons-vue';
 import { api, errorMessage, store, ElMessage } from '../core';
 
-/** The Billing tab of Settings: numbering, tax, payment methods, email wording and currencies. The business profile (name, logo, address) is BizyCore's. */
+/** The Billing tab of Settings: numbering, tax, payment methods, email wording and currencies. The business profile (name, logo, address) is WPFlat Core's. */
 const form = reactive( { currencies: [], rates: {}, payment_methods: [] } );
 const loaded = ref( false );
 const saving = ref( false );

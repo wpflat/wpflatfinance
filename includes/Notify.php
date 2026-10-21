@@ -1,19 +1,19 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Portal;
-use BizyCore\Services\Notifications as N;
+use WPFlatCore\Portal;
+use WPFlatCore\Services\Notifications as N;
 
 defined( 'ABSPATH' ) || exit;
 
-/** The notifications BizyFinance raises, and the daily reminders for invoices that are due or late. */
+/** The notifications WPFlat Finance raises, and the daily reminders for invoices that are due or late. */
 class Notify {
 
 	public static function init() {
-		add_action( 'bizyfinance_invoice_sent', array( __CLASS__, 'invoice_sent' ) );
-		add_action( 'bizyfinance_invoice_status', array( __CLASS__, 'invoice_status' ), 10, 3 );
-		add_action( 'bizyfinance_payment_saved', array( __CLASS__, 'payment' ), 10, 2 );
-		add_action( 'bizycore_daily', array( __CLASS__, 'daily' ), 30 );
+		add_action( 'wpflatfinance_invoice_sent', array( __CLASS__, 'invoice_sent' ) );
+		add_action( 'wpflatfinance_invoice_status', array( __CLASS__, 'invoice_status' ), 10, 3 );
+		add_action( 'wpflatfinance_payment_saved', array( __CLASS__, 'payment' ), 10, 2 );
+		add_action( 'wpflatcore_daily', array( __CLASS__, 'daily' ), 30 );
 	}
 
 	public static function types() {
@@ -59,9 +59,9 @@ class Notify {
 			return;
 		}
 		if ( 'paid' === $new ) {
-			N::emit( 'team_invoice_paid', N::users_with( 'bizyfinance_finance' ), $i['company_name'] . ' paid invoice ' . $i['invoice_number'], self::money( $i['amount'], $i['currency'] ) . ' received in full.', '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'paid:' . $i['id'] );
+			N::emit( 'team_invoice_paid', N::users_with( 'wpflatfinance_finance' ), $i['company_name'] . ' paid invoice ' . $i['invoice_number'], self::money( $i['amount'], $i['currency'] ) . ' received in full.', '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'paid:' . $i['id'] );
 		} elseif ( 'overdue' === $new ) {
-			N::emit( 'team_invoice_overdue', N::users_with( 'bizyfinance_finance' ), 'Invoice ' . $i['invoice_number'] . ' is overdue', sprintf( '%s owes %s (due %s).', $i['company_name'], self::money( (float) $i['amount'] - (float) $i['amount_paid'], $i['currency'] ), $i['due_date'] ), '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'overdue:' . $i['id'] . ':' . $i['due_date'] );
+			N::emit( 'team_invoice_overdue', N::users_with( 'wpflatfinance_finance' ), 'Invoice ' . $i['invoice_number'] . ' is overdue', sprintf( '%s owes %s (due %s).', $i['company_name'], self::money( (float) $i['amount'] - (float) $i['amount_paid'], $i['currency'] ), $i['due_date'] ), '/billing/invoices/' . $i['id'], $i['client_id'], 'invoice', $i['id'], 'overdue:' . $i['id'] . ':' . $i['due_date'] );
 		}
 	}
 
@@ -79,13 +79,13 @@ class Notify {
 	/** Invoices coming due, and invoices still unpaid after their due date, reminded to the client at the owner's pace. */
 	public static function daily() {
 		global $wpdb;
-		if ( ! \BizyCore\Registry::enabled( 'finance' ) ) {
+		if ( ! \WPFlatCore\Registry::enabled( 'finance' ) ) {
 			return;
 		}
 		$today = current_time( 'Y-m-d' );
-		$due   = (int) \BizyCore\Settings::get( 'notify_due_days' );
-		$every = max( 1, (int) \BizyCore\Settings::get( 'notify_overdue_every' ) );
-		$max   = (int) \BizyCore\Settings::get( 'notify_overdue_max' );
+		$due   = (int) \WPFlatCore\Settings::get( 'notify_due_days' );
+		$every = max( 1, (int) \WPFlatCore\Settings::get( 'notify_overdue_every' ) );
+		$max   = (int) \WPFlatCore\Settings::get( 'notify_overdue_max' );
 		$rows  = (array) $wpdb->get_results( 'SELECT i.*, c.name AS company_name FROM ' . Schema::table( 'invoices' ) . ' i LEFT JOIN ' . Schema::table( 'clients' ) . " c ON c.id=i.client_id WHERE i.status IN ('sent','due','partially_paid','overdue') AND i.due_date IS NOT NULL", ARRAY_A ); // phpcs:ignore WordPress.DB
 		foreach ( $rows as $i ) {
 			$days = (int) floor( ( strtotime( $i['due_date'] ) - strtotime( $today ) ) / DAY_IN_SECONDS );

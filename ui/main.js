@@ -21,7 +21,7 @@ import PhaseBadges from './slots/PhaseBadges.vue';
 import PhaseDialog from './slots/PhaseDialog.vue';
 import MoneySettings from './settings/MoneySettings.vue';
 
-/** BizyFinance registers its screens and what it adds to BizyCore's and BizyTasks' pages. Nothing runs unless the module is on. */
+/** WPFlat Finance registers its screens and what it adds to WPFlat Core's and WPFlat Tasks' pages. Nothing runs unless the module is on. */
 const M = 'finance';
 sdk.registerIcon( 'finance', Wallet );
 sdk.registerFormatter( 'money', ( amount, currency ) => fmtMoney( amount, currency ) );
@@ -57,7 +57,7 @@ sdk.registerSlot( 'phase.badges', { id: 'finance', module: M, order: 10, compone
 sdk.registerSlot( 'phase.dialog', { id: 'finance', module: M, order: 10, component: PhaseDialog, when: canFinance } );
 sdk.registerSlot( 'settings.tabs', { id: 'finance', module: M, order: 30, label: 'Billing', component: MoneySettings, when: canFinance } );
 
-// Fields BizyFinance adds to other plugins' forms (the server only sends and saves them for people with the finance permission).
+// Fields WPFlat Finance adds to other plugins' forms (the server only sends and saves them for people with the finance permission).
 sdk.extend( 'client.fields', {
 	id: 'finance-currency',
 	module: M,

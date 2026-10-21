@@ -1,7 +1,7 @@
 <?php
-namespace BizyFinance\Services;
+namespace WPFlatFinance\Services;
 
-use BizyFinance\Schema;
+use WPFlatFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -226,7 +226,7 @@ class Profit {
 				continue;
 			}
 			$m              = Pay::project_money( $p );
-			$project_rows[] = array( 'id' => (int) $p['id'], 'name' => $p['name'], 'client_name' => $p['name'], 'currency' => $p['currency'] ? $p['currency'] : \BizyFinance\Settings::get( 'default_currency' ), 'price' => $m['price'], 'team_cost' => max( $m['allocated'], $m['earned'] ), 'margin' => $m['margin'] );
+			$project_rows[] = array( 'id' => (int) $p['id'], 'name' => $p['name'], 'client_name' => $p['name'], 'currency' => $p['currency'] ? $p['currency'] : \WPFlatFinance\Settings::get( 'default_currency' ), 'price' => $m['price'], 'team_cost' => max( $m['allocated'], $m['earned'] ), 'margin' => $m['margin'] );
 		}
 
 		// Balances and the monthly picture.
@@ -246,7 +246,7 @@ class Profit {
 			$rec_out[ $cur ] = array( 'amount' => round( ( isset( $rec_out[ $cur ] ) ? $rec_out[ $cur ]['amount'] : 0 ) + Expenses::monthly_value( $r['amount'], $r['period'] ), 2 ), 'count' => 1 );
 		}
 		foreach ( (array) $wpdb->get_results( 'SELECT salary_amount, currency FROM ' . Schema::tm() . " tm WHERE status='active' AND salary_amount > 0", ARRAY_A ) as $r ) { // phpcs:ignore WordPress.DB
-			$cur = $r['currency'] ? $r['currency'] : \BizyFinance\Settings::get( 'default_currency' );
+			$cur = $r['currency'] ? $r['currency'] : \WPFlatFinance\Settings::get( 'default_currency' );
 			$rec_out[ $cur ] = array( 'amount' => round( ( isset( $rec_out[ $cur ] ) ? $rec_out[ $cur ]['amount'] : 0 ) + (float) $r['salary_amount'], 2 ), 'count' => 1 );
 		}
 

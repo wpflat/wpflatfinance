@@ -142,7 +142,7 @@ const noRecipient = computed( () => defaults.value && ! form.to.length );
 				<el-alert v-if="noRecipient" type="warning" show-icon :closable="false" class="bd-mb" title="No recipient yet" :description="$fmt( 'This {client} has no primary contact with an email. Add one under {Clients} → Contacts, or type an address below.' )" />
 
 				<div class="bd-send__from bd-muted bd-small">
-					From <strong>{{ defaults.from.name }} &lt;{{ defaults.from.email }}&gt;</strong> · via {{ defaults.method === 'smtp' ? 'Bizy SMTP' : 'the site mailer' }}
+					From <strong>{{ defaults.from.name }} &lt;{{ defaults.from.email }}&gt;</strong> · via {{ defaults.method === 'smtp' ? 'WPFlat SMTP' : 'the site mailer' }}
 				</div>
 
 				<label class="bd-lab">To <span class="bd-muted">— primary contacts</span></label>

@@ -1,8 +1,8 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Portal;
-use BizyFinance\Schema;
+use WPFlatCore\Portal;
+use WPFlatFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 

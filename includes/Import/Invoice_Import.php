@@ -1,15 +1,15 @@
 <?php
-namespace BizyFinance\Import;
+namespace WPFlatFinance\Import;
 
-use BizyFinance\Schema;
-use BizyCore\Services\Activity;
-use BizyFinance\Services\Invoices;
-use BizyFinance\Settings;
+use WPFlatFinance\Schema;
+use WPFlatCore\Services\Activity;
+use WPFlatFinance\Services\Invoices;
+use WPFlatFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Brings invoices exported from another platform into Bizy. Today: Invoice.ng (.xlsx or .csv).
+ * Brings invoices exported from another platform into WPFlat. Today: Invoice.ng (.xlsx or .csv).
  *
  * The export has totals only (no line items, no payment dates), so each invoice becomes one line, and an invoice
  * that was paid gets one payment dated the issue date. Original invoice numbers are kept and the numbering counter
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class Invoice_Import {
 
-	const OPTION = 'bizyfinance_imports';
+	const OPTION = 'wpflatfinance_imports';
 
 	const INVOICE_NG = array( 'Invoice_No', 'Customer_Name', 'Customer_Email', 'Total_Amount', 'Amount_Paid', 'Balance', 'Tax_Amount', 'Currency', 'Payment_Status', 'Issue_Date', 'Due_Date', 'Added_On' );
 
@@ -264,7 +264,7 @@ class Invoice_Import {
 			}
 		}
 		$have = array_flip( (array) $wpdb->get_col( "SELECT invoice_number FROM $inv" ) ); // phpcs:ignore WordPress.DB
-		// Invoices already in Bizy, by client and amount, to spot the same invoice arriving from a second platform.
+		// Invoices already in WPFlat, by client and amount, to spot the same invoice arriving from a second platform.
 		$cand = array();
 		foreach ( (array) $wpdb->get_results( "SELECT i.id, i.invoice_number, i.amount, i.issue_date, c.name FROM $inv i JOIN $cl c ON c.id = i.client_id", ARRAY_A ) as $e ) { // phpcs:ignore WordPress.DB
 			$cand[ self::norm( $e['name'] ) . '|' . number_format( (float) $e['amount'], 2, '.', '' ) ][] = $e;

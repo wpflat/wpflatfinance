@@ -1,13 +1,13 @@
 <?php
-namespace BizyFinance\Services;
+namespace WPFlatFinance\Services;
 
-use BizyFinance\Settings;
+use WPFlatFinance\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * HTML + plain-text email layouts. Table-based with inline styles so they render in Gmail, Outlook and Apple Mail.
- * Palette follows the Bizy UI: deep ink #222530, neutral greys, status colours only for state.
+ * Palette follows the WPFlat UI: deep ink #222530, neutral greys, status colours only for state.
  */
 class Email_Templates {
 
@@ -289,7 +289,7 @@ class Email_Templates {
 	public static function smtp_test( array $business, $via ) {
 		$font = self::FONT;
 		$name = esc_html( $business['business_name'] );
-		$html = '<!doctype html><html><body style="margin:0;padding:32px 14px;background:#f5f7fa;"><table role="presentation" width="520" cellpadding="0" cellspacing="0" align="center" style="max-width:100%;background:#fff;border-radius:16px;border:1px solid #e8ebf0;"><tr><td style="padding:34px;font-family:' . $font . ';color:#525866;font-size:15px;line-height:1.65;"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#868e9d;">Bizy</div><div style="font-size:24px;font-weight:700;letter-spacing:-0.02em;color:#222530;margin:6px 0 12px;">Email is working ✓</div>This is a test message from ' . $name . '. Sent via <strong>' . esc_html( $via ) . '</strong>. If you can read this, invoice emails will reach your clients.</td></tr></table></body></html>';
+		$html = '<!doctype html><html><body style="margin:0;padding:32px 14px;background:#f5f7fa;"><table role="presentation" width="520" cellpadding="0" cellspacing="0" align="center" style="max-width:100%;background:#fff;border-radius:16px;border:1px solid #e8ebf0;"><tr><td style="padding:34px;font-family:' . $font . ';color:#525866;font-size:15px;line-height:1.65;"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#868e9d;">WPFlat</div><div style="font-size:24px;font-weight:700;letter-spacing:-0.02em;color:#222530;margin:6px 0 12px;">Email is working ✓</div>This is a test message from ' . $name . '. Sent via <strong>' . esc_html( $via ) . '</strong>. If you can read this, invoice emails will reach your clients.</td></tr></table></body></html>';
 		return array( 'html' => $html, 'text' => 'Email is working. This is a test message from ' . $business['business_name'] . ' sent via ' . $via . '.' );
 	}
 }

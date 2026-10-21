@@ -12,7 +12,7 @@ const pill = ( def, text ) => h( 'span', { class: [ 'bd-badge', 'bd-badge--' + (
 const person = ( name ) => ( name ? h( 'div', { class: 'bd-cell-client' }, [ h( 'span', { class: 'bd-ava', style: avatarStyle( name ) }, initials( name ) ), h( 'span', name ) ] ) : muted( '—' ) );
 const deptField = ( help ) => ( { name: 'department_id', label: dept().one, type: 'remote', remote: { resource: 'departments', label: ( b ) => b.name, params: () => ( { status: 'active' } ) }, help: help || '' } );
 const deptFilter = () => ( { name: 'department_id', label: dept().one, remote: { resource: 'departments', label: ( b ) => b.name, params: { status: 'active' } } } );
-/** The department a client sits in first (BizyCore lists them on the client row). */
+/** The department a client sits in first (WPFlat Core lists them on the client row). */
 const primaryDept = ( c ) => ( c.departments && c.departments[ 0 ] ? c.departments[ 0 ].id : c.department_id || 0 );
 const clientRemote = () => ( { resource: 'clients', label: ( c ) => c.name, params: () => ( { status: 'active' } ) } );
 const daysTo = ( d ) => Math.round( ( new Date( d + 'T00:00:00' ) - new Date( today() + 'T00:00:00' ) ) / 86400000 );

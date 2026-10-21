@@ -1,7 +1,7 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyFinance\Schema;
+use WPFlatFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -18,7 +18,7 @@ class Payslip {
 		}
 		nocache_headers();
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
-		if ( ! current_user_can( 'bizyfinance_finance' ) ) {
+		if ( ! current_user_can( 'wpflatfinance_finance' ) ) {
 			status_header( 404 );
 			wp_die( 'Not found.', 'Not found', array( 'response' => 404 ) );
 		}

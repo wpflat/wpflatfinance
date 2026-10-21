@@ -1,13 +1,13 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
 defined( 'ABSPATH' ) || exit;
 
-/** BizyFinance's tables. */
+/** WPFlat Finance's tables. */
 class Install {
 
 	const DB_VERSION = '1';
-	const OPTION     = 'bizyfinance_db_version';
+	const OPTION     = 'wpflatfinance_db_version';
 
 	/** Cheap check on every request so an updated plugin upgrades itself. */
 	public static function maybe_upgrade() {
@@ -343,7 +343,7 @@ class Install {
   KEY paid_on (paid_on)
 ) $charset;";
 
-		// What BizyCore's and BizyTasks' records carry for money, kept here so those plugins stay money-free.
+		// What WPFlat Core's and WPFlat Tasks' records carry for money, kept here so those plugins stay money-free.
 		$sql[] = "CREATE TABLE {$t['client_billing']} (
   client_id bigint(20) unsigned NOT NULL DEFAULT 0,
   currency char(3) NOT NULL DEFAULT '',

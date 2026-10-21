@@ -86,7 +86,7 @@ export const BILL_STATUS = {
 };
 
 
-/* ───────────── Period presets and CSV download (the same helpers BizyCore's analytics bar uses) ───────────── */
+/* ───────────── Period presets and CSV download (the same helpers WPFlat Core's analytics bar uses) ───────────── */
 /** Period presets used by the analytics bar. `to` is always today (or the end of a past month). */
 export const PERIODS = [
 	{ id: '30d', label: '30 days' },

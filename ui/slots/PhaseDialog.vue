@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-vue-next';
 import { api, errorMessage, ElMessage, RemoteSelect } from '../core';
 import { defaultCurrency, fmtMoney } from '../util';
 
-/** What BizyFinance adds to BizyTasks' "Edit phase" pop-up: the phase price, the team budget and who is paid what. */
+/** What WPFlat Finance adds to WPFlat Tasks' "Edit phase" pop-up: the phase price, the team budget and who is paid what. */
 const props = defineProps( { phase: { type: Object, required: true }, project: { type: Object, default: null }, reload: { type: Function, default: () => {} } } );
 const cur = computed( () => ( props.project && props.project.currency ) || defaultCurrency() );
 const fin = computed( () => 'team_budget' in props.phase );

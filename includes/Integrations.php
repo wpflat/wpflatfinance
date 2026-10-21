@@ -1,47 +1,47 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Links;
-use BizyCore\Registry;
-use BizyFinance\Services\Pay;
+use WPFlatCore\Links;
+use WPFlatCore\Registry;
+use WPFlatFinance\Services\Pay;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What BizyFinance adds to the records of BizyCore and BizyTasks: a client's billing currency, a team member's pay, a
+ * What WPFlat Finance adds to the records of WPFlat Core and WPFlat Tasks: a client's billing currency, a team member's pay, a
  * project's price, a phase's budget, a task's pay. It keeps those fields in its own tables and shows them (to people
  * with the finance capability) on the other plugins' rows, so those plugins stay money-free.
  */
 class Integrations {
 
 	public static function init() {
-		add_filter( 'bizycore_decorate_clients', array( __CLASS__, 'clients' ) );
-		add_action( 'bizycore_saved_clients', array( __CLASS__, 'client_saved' ), 10, 3 );
-		add_action( 'bizycore_client_deleted', array( __CLASS__, 'client_deleted' ) );
-		add_filter( 'bizycore_decorate_team', array( __CLASS__, 'team' ) );
-		add_action( 'bizycore_saved_team', array( __CLASS__, 'team_saved' ), 10, 3 );
-		add_filter( 'bizycore_decorate_projects', array( __CLASS__, 'projects' ) );
-		add_action( 'bizycore_saved_projects', array( __CLASS__, 'project_saved' ), 10, 3 );
-		add_filter( 'bizycore_decorate_project-phases', array( __CLASS__, 'phases' ) );
-		add_action( 'bizycore_saved_project-phases', array( __CLASS__, 'phase_saved' ), 10, 3 );
-		add_filter( 'bizycore_before_delete_project-phases', array( __CLASS__, 'phase_before_delete' ), 10, 2 );
-		add_action( 'bizycore_deleted_project-phases', array( __CLASS__, 'phase_deleted' ) );
-		add_action( 'bizycore_deleted_projects', array( __CLASS__, 'project_deleted' ) );
-		add_action( 'bizycore_deleted_team', array( __CLASS__, 'team_deleted' ) );
-		add_action( 'bizycore_deleted_tasks', array( __CLASS__, 'task_deleted' ) );
-		add_filter( 'bizycore_decorate_tasks', array( __CLASS__, 'tasks' ) );
-		add_action( 'bizycore_saved_tasks', array( __CLASS__, 'task_saved' ), 10, 3 );
-		add_filter( 'bizycore_search', array( __CLASS__, 'search' ), 10, 2 );
-		add_filter( 'bizycore_message_contexts', array( __CLASS__, 'message_contexts' ), 10, 2 );
-		add_filter( 'bizycore_message_context_name', array( __CLASS__, 'message_context_name' ), 10, 3 );
-		add_filter( 'bizycore_home', array( __CLASS__, 'home' ) );
-		add_filter( 'bizycore_meta', array( __CLASS__, 'meta' ) );
-		add_filter( 'bizycore_department_card', array( __CLASS__, 'department_card' ), 10, 4 );
-		add_filter( 'bizycore_department_detail', array( __CLASS__, 'department_detail' ), 10, 4 );
+		add_filter( 'wpflatcore_decorate_clients', array( __CLASS__, 'clients' ) );
+		add_action( 'wpflatcore_saved_clients', array( __CLASS__, 'client_saved' ), 10, 3 );
+		add_action( 'wpflatcore_client_deleted', array( __CLASS__, 'client_deleted' ) );
+		add_filter( 'wpflatcore_decorate_team', array( __CLASS__, 'team' ) );
+		add_action( 'wpflatcore_saved_team', array( __CLASS__, 'team_saved' ), 10, 3 );
+		add_filter( 'wpflatcore_decorate_projects', array( __CLASS__, 'projects' ) );
+		add_action( 'wpflatcore_saved_projects', array( __CLASS__, 'project_saved' ), 10, 3 );
+		add_filter( 'wpflatcore_decorate_project-phases', array( __CLASS__, 'phases' ) );
+		add_action( 'wpflatcore_saved_project-phases', array( __CLASS__, 'phase_saved' ), 10, 3 );
+		add_filter( 'wpflatcore_before_delete_project-phases', array( __CLASS__, 'phase_before_delete' ), 10, 2 );
+		add_action( 'wpflatcore_deleted_project-phases', array( __CLASS__, 'phase_deleted' ) );
+		add_action( 'wpflatcore_deleted_projects', array( __CLASS__, 'project_deleted' ) );
+		add_action( 'wpflatcore_deleted_team', array( __CLASS__, 'team_deleted' ) );
+		add_action( 'wpflatcore_deleted_tasks', array( __CLASS__, 'task_deleted' ) );
+		add_filter( 'wpflatcore_decorate_tasks', array( __CLASS__, 'tasks' ) );
+		add_action( 'wpflatcore_saved_tasks', array( __CLASS__, 'task_saved' ), 10, 3 );
+		add_filter( 'wpflatcore_search', array( __CLASS__, 'search' ), 10, 2 );
+		add_filter( 'wpflatcore_message_contexts', array( __CLASS__, 'message_contexts' ), 10, 2 );
+		add_filter( 'wpflatcore_message_context_name', array( __CLASS__, 'message_context_name' ), 10, 3 );
+		add_filter( 'wpflatcore_home', array( __CLASS__, 'home' ) );
+		add_filter( 'wpflatcore_meta', array( __CLASS__, 'meta' ) );
+		add_filter( 'wpflatcore_department_card', array( __CLASS__, 'department_card' ), 10, 4 );
+		add_filter( 'wpflatcore_department_detail', array( __CLASS__, 'department_detail' ), 10, 4 );
 	}
 
 	private static function fin() {
-		return current_user_can( 'manage_options' ) || current_user_can( 'bizyfinance_finance' );
+		return current_user_can( 'manage_options' ) || current_user_can( 'wpflatfinance_finance' );
 	}
 
 	private static function on() {
@@ -173,7 +173,7 @@ class Integrations {
 		}
 	}
 
-	/* ---- BizyTasks: a project's price, a phase's budget, a task's pay ---- */
+	/* ---- WPFlat Tasks: a project's price, a phase's budget, a task's pay ---- */
 
 	public static function projects( $rows ) {
 		global $wpdb;
@@ -262,7 +262,7 @@ class Integrations {
 			return $ok;
 		}
 		$paid = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Schema::table( 'pay_items' ) . " WHERE phase_id=%d AND status='paid'", $row['id'] ) ); // phpcs:ignore WordPress.DB
-		return $paid ? new \WP_Error( 'bizyfinance_blocked', 'This phase has paid team members. Void the payouts first, or keep the phase.', array( 'status' => 409 ) ) : $ok;
+		return $paid ? new \WP_Error( 'wpflatfinance_blocked', 'This phase has paid team members. Void the payouts first, or keep the phase.', array( 'status' => 409 ) ) : $ok;
 	}
 
 	public static function phase_deleted( $row ) {
@@ -272,7 +272,7 @@ class Integrations {
 		$wpdb->delete( Schema::table( 'phase_money' ), array( 'phase_id' => (int) $row['id'] ) );
 	}
 
-	/** BizyTasks removes the project's phases itself, so sweep what belonged to them here. */
+	/** WPFlat Tasks removes the project's phases itself, so sweep what belonged to them here. */
 	public static function project_deleted( $row ) {
 		global $wpdb;
 		$pid = (int) $row['id'];
@@ -360,9 +360,9 @@ class Integrations {
 	}
 
 
-	/* ---- the browser app: BizyFinance's settings, and money on the department pages ---- */
+	/* ---- the browser app: WPFlat Finance's settings, and money on the department pages ---- */
 
-	/** BizyFinance's settings reach the browser app in meta.settings: the safe ones for everybody, the full set for people who bill. */
+	/** WPFlat Finance's settings reach the browser app in meta.settings: the safe ones for everybody, the full set for people who bill. */
 	public static function meta( $m ) {
 		if ( ! self::on() ) {
 			return $m;
@@ -372,7 +372,7 @@ class Integrations {
 		foreach ( array( 'currencies', 'default_currency', 'base_currency', 'tax_label' ) as $k ) {
 			$pub[ $k ] = $own[ $k ];
 		}
-		if ( current_user_can( 'bizyfinance_billing' ) || current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'wpflatfinance_billing' ) || current_user_can( 'manage_options' ) ) {
 			$pub = array_intersect_key( $own, Settings::defaults() );
 		}
 		$m['settings'] = array_merge( isset( $m['settings'] ) ? (array) $m['settings'] : array(), $pub );
@@ -414,15 +414,15 @@ class Integrations {
 
 	public static function search( $out, $q ) {
 		global $wpdb;
-		if ( ! self::on() || ( ! current_user_can( 'bizyfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
+		if ( ! self::on() || ( ! current_user_can( 'wpflatfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
 			return $out;
 		}
 		$like = '%' . $wpdb->esc_like( $q ) . '%';
 		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT i.id, i.invoice_number, i.title, c.name AS client_name FROM ' . Schema::table( 'invoices' ) . ' i LEFT JOIN ' . Schema::table( 'clients' ) . ' c ON c.id=i.client_id WHERE i.invoice_number LIKE %s OR i.title LIKE %s ORDER BY i.id DESC LIMIT 6', $like, $like ), ARRAY_A ) as $r ) { // phpcs:ignore WordPress.DB
-			$out[] = array( 'type' => 'invoice', 'kind' => \BizyCore\Terminology::label( 'invoice' ), 'id' => (int) $r['id'], 'label' => $r['invoice_number'], 'sub' => trim( $r['title'] . ' · ' . $r['client_name'], ' ·' ), 'route' => '/billing/invoices/' . (int) $r['id'] );
+			$out[] = array( 'type' => 'invoice', 'kind' => \WPFlatCore\Terminology::label( 'invoice' ), 'id' => (int) $r['id'], 'label' => $r['invoice_number'], 'sub' => trim( $r['title'] . ' · ' . $r['client_name'], ' ·' ), 'route' => '/billing/invoices/' . (int) $r['id'] );
 		}
 		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT id, name, type FROM ' . Schema::table( 'catalog' ) . ' WHERE name LIKE %s ORDER BY name LIMIT 5', $like ), ARRAY_A ) as $r ) { // phpcs:ignore WordPress.DB
-			$out[] = array( 'type' => 'catalog', 'kind' => \BizyCore\Terminology::label( 'catalog' ), 'id' => (int) $r['id'], 'label' => $r['name'], 'sub' => $r['type'], 'route' => '/catalog' );
+			$out[] = array( 'type' => 'catalog', 'kind' => \WPFlatCore\Terminology::label( 'catalog' ), 'id' => (int) $r['id'], 'label' => $r['name'], 'sub' => $r['type'], 'route' => '/catalog' );
 		}
 		return $out;
 	}
@@ -449,7 +449,7 @@ class Integrations {
 	/** Home: money owed to the business, what to invoice, and overdue invoices to chase. */
 	public static function home( $home ) {
 		global $wpdb;
-		if ( ! self::on() || ( ! current_user_can( 'bizyfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
+		if ( ! self::on() || ( ! current_user_can( 'wpflatfinance_billing' ) && ! current_user_can( 'manage_options' ) ) ) {
 			return $home;
 		}
 		$inv    = Schema::table( 'invoices' );
@@ -468,7 +468,7 @@ class Integrations {
 			$home['coming_up'][] = array( 'kind' => 'invoice', 'title' => $r['invoice_number'] . ' falls due', 'sub' => $r['client_name'], 'link' => '/billing/invoices/' . (int) $r['id'], 'days' => (int) floor( ( strtotime( $r['due_date'] ) - strtotime( $today ) ) / DAY_IN_SECONDS ) );
 		}
 		$home['setup'][] = array( 'key' => 'catalog', 'label' => 'Add what you sell to the catalog', 'to' => '/catalog', 'done' => (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Schema::table( 'catalog' ) ) > 0 ); // phpcs:ignore WordPress.DB
-		$home['setup'][] = array( 'key' => 'payment', 'label' => \BizyCore\Terminology::fmt( 'Add how {clients} can pay you' ), 'to' => '/settings?tab=finance', 'done' => count( (array) Settings::get( 'payment_methods' ) ) > 0 );
+		$home['setup'][] = array( 'key' => 'payment', 'label' => \WPFlatCore\Terminology::fmt( 'Add how {clients} can pay you' ), 'to' => '/settings?tab=finance', 'done' => count( (array) Settings::get( 'payment_methods' ) ) > 0 );
 		return $home;
 	}
 }

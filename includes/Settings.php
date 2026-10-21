@@ -1,15 +1,15 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * BizyFinance's settings: currencies, invoice numbering and wording, tax, payment methods. Anything else it asks for —
- * the business name, logo, address — comes from BizyCore's settings, so the one business profile is shared.
+ * WPFlat Finance's settings: currencies, invoice numbering and wording, tax, payment methods. Anything else it asks for —
+ * the business name, logo, address — comes from WPFlat Core's settings, so the one business profile is shared.
  */
 class Settings {
 
-	const OPTION = 'bizyfinance_settings';
+	const OPTION = 'wpflatfinance_settings';
 
 	public static function defaults() {
 		return array(
@@ -44,12 +44,12 @@ class Settings {
 	public static function get( $key = null ) {
 		$own = wp_parse_args( get_option( self::OPTION, array() ), self::defaults() );
 		if ( null === $key ) {
-			return $own + \BizyCore\Settings::get();
+			return $own + \WPFlatCore\Settings::get();
 		}
 		if ( array_key_exists( $key, $own ) ) {
 			return $own[ $key ];
 		}
-		return \BizyCore\Settings::get( $key );
+		return \WPFlatCore\Settings::get( $key );
 	}
 
 	public static function update( array $in ) {

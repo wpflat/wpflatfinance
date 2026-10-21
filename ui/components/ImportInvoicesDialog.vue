@@ -122,7 +122,7 @@ const close = () => { if ( step.value !== 'run' ) emit( 'update:modelValue', fal
 <template>
 	<el-dialog :model-value="modelValue" title="Import invoices" width="860px" append-to-body :close-on-click-modal="false" :show-close="step !== 'run'" class="bd-import" @update:model-value="close">
 		<div v-if="step === 'upload'">
-			<p>Upload an invoice export from another platform: <strong>Invoice.ng</strong> (.xlsx or .csv) or <strong>Sprout Invoices</strong> (.csv). Bizy recognises which one it is, and you see exactly what will be created before anything is saved.</p>
+			<p>Upload an invoice export from another platform: <strong>Invoice.ng</strong> (.xlsx or .csv) or <strong>Sprout Invoices</strong> (.csv). WPFlat recognises which one it is, and you see exactly what will be created before anything is saved.</p>
 			<p class="bd-muted bd-small">These exports have totals rather than line items, so each invoice becomes one line, and a paid invoice gets one payment dated the day it was issued. Original invoice numbers are kept and your own numbering is not changed. Invoices that look like ones you already have are flagged so you can skip them.</p>
 			<input ref="fileInput" type="file" accept=".xlsx,.csv" hidden @change="pick" />
 			<el-button type="primary" :loading="busy" @click="fileInput.click()">Choose file…</el-button>
@@ -139,10 +139,10 @@ const close = () => { if ( step.value !== 'run' ) emit( 'update:modelValue', fal
 				<el-table :data="pv.maybe_duplicates" size="small" max-height="200" class="bd-mt-xs">
 					<el-table-column label="Skip" width="60"><template #default="{ row }"><el-checkbox v-model="skipMaybe[ row.ref ]" :aria-label="'Skip ' + row.label" /></template></el-table-column>
 					<el-table-column label="In the file" min-width="200"><template #default="{ row }">{{ row.label }} · {{ row.client }}<div class="bd-muted bd-small">{{ fmtMoney( row.amount, row.currency ) }} · {{ row.issue }}</div></template></el-table-column>
-					<el-table-column label="Already in Bizy" min-width="160"><template #default="{ row }">{{ row.existing_number }}<div class="bd-muted bd-small">{{ row.existing_date }}</div></template></el-table-column>
+					<el-table-column label="Already in WPFlat" min-width="160"><template #default="{ row }">{{ row.existing_number }}<div class="bd-muted bd-small">{{ row.existing_date }}</div></template></el-table-column>
 				</el-table>
 			</div>
-			<el-alert v-if="pv.duplicates.length" type="warning" show-icon :closable="false" class="bd-mb" :title="`${ pv.duplicates.length } invoice number${ pv.duplicates.length === 1 ? ' is' : 's are' } already in Bizy and will be skipped: ${ pv.duplicates.slice( 0, 6 ).join( ', ' ) }${ pv.duplicates.length > 6 ? '…' : '' }`" />
+			<el-alert v-if="pv.duplicates.length" type="warning" show-icon :closable="false" class="bd-mb" :title="`${ pv.duplicates.length } invoice number${ pv.duplicates.length === 1 ? ' is' : 's are' } already in WPFlat and will be skipped: ${ pv.duplicates.slice( 0, 6 ).join( ', ' ) }${ pv.duplicates.length > 6 ? '…' : '' }`" />
 			<el-alert v-for="( i, n ) in pv.issues" :key="n" type="warning" show-icon :closable="false" :title="i" class="bd-mb" />
 			<div class="bd-mb"><span class="bd-strong">{{ dept().one }} for everything imported</span>
 				<RemoteSelect v-model="department" resource="departments" :label="( b ) => b.name" :params="{ status: 'active' }" :placeholder="'No ' + dept().lower" clearable style="width: 260px; margin-left: 10px" />
@@ -171,7 +171,7 @@ const close = () => { if ( step.value !== 'run' ) emit( 'update:modelValue', fal
 		<div v-else-if="step === 'done'">
 			<el-alert v-if="err" :title="err" type="error" show-icon :closable="false" class="bd-mb" />
 			<el-alert v-if="result" type="success" show-icon :closable="false" :title="`Imported ${ result.created } invoices${ result.clients ? ' and ' + result.clients + ' new clients' : '' }.`" />
-			<p v-if="result && result.skipped" class="bd-muted bd-small bd-mt">{{ result.skipped }} skipped (already in Bizy).</p>
+			<p v-if="result && result.skipped" class="bd-muted bd-small bd-mt">{{ result.skipped }} skipped (already in WPFlat).</p>
 			<el-alert v-for="( e, i ) in ( result ? result.errors : [] )" :key="i" :title="e" type="warning" show-icon :closable="false" class="bd-mt" />
 		</div>
 

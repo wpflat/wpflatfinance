@@ -1,27 +1,27 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Resources;
+use WPFlatCore\Resources;
 
-use BizyCore\Rest\Resource_Controller;
-use BizyCore\Rest\Routes as Core_Routes;
-use BizyCore\Services\Activity;
-use BizyFinance\Services\Billing;
-use BizyFinance\Services\BillingList;
-use BizyFinance\Services\BillingQueue;
-use BizyFinance\Services\BillSummary;
-use BizyFinance\Services\Invoice_Mail;
-use BizyFinance\Services\Invoices;
-use BizyFinance\Services\Ledger;
-use BizyFinance\Services\Renewals;
-use BizyFinance\Import\Invoice_Import;
+use WPFlatCore\Rest\Resource_Controller;
+use WPFlatCore\Rest\Routes as Core_Routes;
+use WPFlatCore\Services\Activity;
+use WPFlatFinance\Services\Billing;
+use WPFlatFinance\Services\BillingList;
+use WPFlatFinance\Services\BillingQueue;
+use WPFlatFinance\Services\BillSummary;
+use WPFlatFinance\Services\Invoice_Mail;
+use WPFlatFinance\Services\Invoices;
+use WPFlatFinance\Services\Ledger;
+use WPFlatFinance\Services\Renewals;
+use WPFlatFinance\Import\Invoice_Import;
 
 defined( 'ABSPATH' ) || exit;
 
-/** BizyFinance's REST routes (in BizyCore's bizycore/v1 namespace, gone when the module is off). */
+/** WPFlat Finance's REST routes (in WPFlat Core's wpflatcore/v1 namespace, gone when the module is off). */
 class Routes {
 
-	/** Registers a route with BizyCore, which drops it when BizyFinance is switched off. */
+	/** Registers a route with WPFlat Core, which drops it when WPFlat Finance is switched off. */
 	private static function reg( $route, $args ) {
 		Core_Routes::add( 'finance', $route, $args );
 	}
@@ -29,7 +29,7 @@ class Routes {
 	public static function register() {
 		$perm = array( Resource_Controller::class, 'can' );
 		$fin  = function () {
-			return current_user_can( 'manage_options' ) || ( current_user_can( 'manage_bizycore' ) && current_user_can( 'bizyfinance_finance' ) );
+			return current_user_can( 'manage_options' ) || ( current_user_can( 'manage_wpflatcore' ) && current_user_can( 'wpflatfinance_finance' ) );
 		};
 		self::reg( '/invoices/(?P<id>\d+)/share', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'invoice_share' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/mark-sent', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'invoice_mark_sent' ), 'permission_callback' => $perm ) );
@@ -38,24 +38,24 @@ class Routes {
 		self::reg( '/invoices/(?P<id>\d+)/email-preview', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'email_preview' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/send', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'email_send' ), 'permission_callback' => $perm ) );
 		self::reg( '/invoices/(?P<id>\d+)/emails', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'email_history' ), 'permission_callback' => $perm ) );
-		self::reg( '/expenses/summary', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \BizyFinance\Services\Expenses::summary() ); }, 'permission_callback' => $fin ) );
-		self::reg( '/expenses/post-due', array( 'methods' => 'POST', 'callback' => function () { return rest_ensure_response( array( 'posted' => \BizyFinance\Services\Expenses::post_due() ) ); }, 'permission_callback' => $fin ) );
+		self::reg( '/expenses/summary', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \WPFlatFinance\Services\Expenses::summary() ); }, 'permission_callback' => $fin ) );
+		self::reg( '/expenses/post-due', array( 'methods' => 'POST', 'callback' => function () { return rest_ensure_response( array( 'posted' => \WPFlatFinance\Services\Expenses::post_due() ) ); }, 'permission_callback' => $fin ) );
 		self::reg( '/payroll', array( 'methods' => 'GET', 'callback' => function ( \WP_REST_Request $req ) {
-			return rest_ensure_response( \BizyFinance\Services\Payroll::overview( (string) $req->get_param( 'period' ) ) );
+			return rest_ensure_response( \WPFlatFinance\Services\Payroll::overview( (string) $req->get_param( 'period' ) ) );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/payroll/run', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) {
 			$p = (array) $req->get_json_params();
-			return rest_ensure_response( \BizyFinance\Services\Payroll::run( isset( $p['period'] ) ? $p['period'] : '' ) );
+			return rest_ensure_response( \WPFlatFinance\Services\Payroll::run( isset( $p['period'] ) ? $p['period'] : '' ) );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/payroll/pay', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) {
 			$p = (array) $req->get_json_params();
-			return rest_ensure_response( \BizyFinance\Services\Payroll::pay_members( isset( $p['member_ids'] ) ? (array) $p['member_ids'] : array(), isset( $p['paid_on'] ) ? $p['paid_on'] : '', isset( $p['method'] ) ? $p['method'] : '', isset( $p['reference'] ) ? $p['reference'] : '' ) );
+			return rest_ensure_response( \WPFlatFinance\Services\Payroll::pay_members( isset( $p['member_ids'] ) ? (array) $p['member_ids'] : array(), isset( $p['paid_on'] ) ? $p['paid_on'] : '', isset( $p['method'] ) ? $p['method'] : '', isset( $p['reference'] ) ? $p['reference'] : '' ) );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/finance/overview', array( 'methods' => 'GET', 'callback' => function ( \WP_REST_Request $req ) {
-			return rest_ensure_response( \BizyFinance\Services\Profit::overview( $req->get_param( 'from' ), $req->get_param( 'to' ), (string) $req->get_param( 'income_basis' ), (string) $req->get_param( 'pay_basis' ), $req->get_param( 'department_id' ) ) );
+			return rest_ensure_response( \WPFlatFinance\Services\Profit::overview( $req->get_param( 'from' ), $req->get_param( 'to' ), (string) $req->get_param( 'income_basis' ), (string) $req->get_param( 'pay_basis' ), $req->get_param( 'department_id' ) ) );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/finance/analytics', array( 'methods' => 'GET', 'callback' => function ( \WP_REST_Request $req ) {
-			return rest_ensure_response( \BizyFinance\Services\FinanceAnalytics::query( array(
+			return rest_ensure_response( \WPFlatFinance\Services\FinanceAnalytics::query( array(
 				'from'          => (string) $req->get_param( 'from' ),
 				'to'            => (string) $req->get_param( 'to' ),
 				'department_id' => (string) $req->get_param( 'department_id' ),
@@ -70,15 +70,15 @@ class Routes {
 			$to   = preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $req->get_param( 'to' ) ) ? $req->get_param( 'to' ) : gmdate( 'Y-12-31' );
 			$dep = (string) $req->get_param( 'department_id' );
 			$cur = strtoupper( sanitize_text_field( (string) $req->get_param( 'currency' ) ) );
-			return rest_ensure_response( \BizyFinance\Services\Profit::export( $type, $from, $to, 'none' === $dep ? 0 : absint( $dep ), $cur ) );
+			return rest_ensure_response( \WPFlatFinance\Services\Profit::export( $type, $from, $to, 'none' === $dep ? 0 : absint( $dep ), $cur ) );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/payouts/create', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) {
 			$p   = (array) $req->get_json_params();
-			$res = \BizyFinance\Services\Pay::create_payout( isset( $p['team_member_id'] ) ? $p['team_member_id'] : 0, isset( $p['item_ids'] ) ? (array) $p['item_ids'] : array(), isset( $p['paid_on'] ) ? $p['paid_on'] : '', isset( $p['method'] ) ? $p['method'] : '', isset( $p['reference'] ) ? $p['reference'] : '', isset( $p['notes'] ) ? $p['notes'] : '' );
+			$res = \WPFlatFinance\Services\Pay::create_payout( isset( $p['team_member_id'] ) ? $p['team_member_id'] : 0, isset( $p['item_ids'] ) ? (array) $p['item_ids'] : array(), isset( $p['paid_on'] ) ? $p['paid_on'] : '', isset( $p['method'] ) ? $p['method'] : '', isset( $p['reference'] ) ? $p['reference'] : '', isset( $p['notes'] ) ? $p['notes'] : '' );
 			return is_wp_error( $res ) ? $res : rest_ensure_response( $res );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/payouts/(?P<id>\d+)/void', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) {
-			$res = \BizyFinance\Services\Pay::void_payout( (int) $req['id'] );
+			$res = \WPFlatFinance\Services\Pay::void_payout( (int) $req['id'] );
 			return is_wp_error( $res ) ? $res : rest_ensure_response( $res );
 		}, 'permission_callback' => $fin ) );
 		self::reg( '/billing/summary', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'billing_summary' ), 'permission_callback' => $perm ) );
@@ -86,19 +86,19 @@ class Routes {
 		self::reg( '/clients/(?P<id>\d+)/ledger', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'client_ledger' ), 'permission_callback' => $perm ) );
 		self::reg( '/client-services/(?P<id>\d+)/ledger', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'service_ledger' ), 'permission_callback' => $perm ) );
 		self::reg( '/billing/list', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'billing_list' ), 'permission_callback' => $perm ) );
-		self::reg( '/currencies/usage', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \BizyFinance\Services\Currency::usage() ); }, 'permission_callback' => $perm ) );
+		self::reg( '/currencies/usage', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \WPFlatFinance\Services\Currency::usage() ); }, 'permission_callback' => $perm ) );
 		self::reg( '/invoices/import/preview', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'import_preview' ), 'permission_callback' => $fin ) );
 		self::reg( '/invoices/import/run', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'import_run' ), 'permission_callback' => $fin ) );
-		self::reg( '/invoices/import/history', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \BizyFinance\Import\Invoice_Import::history() ); }, 'permission_callback' => $fin ) );
-		self::reg( '/invoices/import/(?P<id>[a-f0-9]{6,32})/undo', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) { $r = \BizyFinance\Import\Invoice_Import::undo( (string) $req['id'] ); return is_wp_error( $r ) ? $r : rest_ensure_response( $r ); }, 'permission_callback' => $fin ) );
+		self::reg( '/invoices/import/history', array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( \WPFlatFinance\Import\Invoice_Import::history() ); }, 'permission_callback' => $fin ) );
+		self::reg( '/invoices/import/(?P<id>[a-f0-9]{6,32})/undo', array( 'methods' => 'POST', 'callback' => function ( \WP_REST_Request $req ) { $r = \WPFlatFinance\Import\Invoice_Import::undo( (string) $req['id'] ); return is_wp_error( $r ) ? $r : rest_ensure_response( $r ); }, 'permission_callback' => $fin ) );
 		self::reg( '/renewals/(?P<id>\d+)/mark-renewed', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'mark_renewed' ), 'permission_callback' => $perm ) );
 		self::reg( '/charges/(?P<id>\d+)/waive', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'waive_charge' ), 'permission_callback' => $perm ) );
 		self::reg( '/finance/settings', array(
-			array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( array_intersect_key( \BizyFinance\Settings::get(), \BizyFinance\Settings::defaults() ) ); }, 'permission_callback' => $perm ),
+			array( 'methods' => 'GET', 'callback' => function () { return rest_ensure_response( array_intersect_key( \WPFlatFinance\Settings::get(), \WPFlatFinance\Settings::defaults() ) ); }, 'permission_callback' => $perm ),
 			array( 'methods' => 'POST,PUT', 'callback' => function ( \WP_REST_Request $req ) {
-				$out = \BizyFinance\Settings::update( (array) $req->get_json_params() );
+				$out = \WPFlatFinance\Settings::update( (array) $req->get_json_params() );
 				Activity::log( 'settings', 0, 0, 'updated', 'Billing settings updated' );
-				return rest_ensure_response( array_intersect_key( $out, \BizyFinance\Settings::defaults() ) );
+				return rest_ensure_response( array_intersect_key( $out, \WPFlatFinance\Settings::defaults() ) );
 			}, 'permission_callback' => $fin ),
 		) );
 		self::reg( '/invoices/from-sources', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'invoice_from_sources' ), 'permission_callback' => $perm ) );
@@ -107,7 +107,7 @@ class Routes {
 	/** Billing: everything we charge (retainers, subscriptions, one-off) in one list. */
 	public static function billing_list( \WP_REST_Request $req ) {
 		return rest_ensure_response(
-			\BizyFinance\Services\BillingList::query(
+			\WPFlatFinance\Services\BillingList::query(
 				array(
 					'type'      => sanitize_key( (string) $req->get_param( 'type' ) ),
 					'status'    => sanitize_key( (string) $req->get_param( 'status' ) ),
@@ -171,7 +171,7 @@ class Routes {
 
 	public static function email_defaults( \WP_REST_Request $req ) {
 		$d = Invoice_Mail::defaults( (int) $req['id'] );
-		return $d ? rest_ensure_response( $d ) : new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+		return $d ? rest_ensure_response( $d ) : new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 	}
 
 	public static function email_history( \WP_REST_Request $req ) {
@@ -183,7 +183,7 @@ class Routes {
 		$to    = Invoice_Mail::clean_list( isset( $p['to'] ) ? $p['to'] : array() );
 		$names = is_wp_error( $to ) ? array() : wp_list_pluck( $to, 'name' );
 		$r     = Invoice_Mail::render( (int) $req['id'], isset( $p['subject'] ) ? (string) $p['subject'] : '', isset( $p['message'] ) ? (string) $p['message'] : '', $names );
-		return $r ? rest_ensure_response( array( 'html' => $r['html'], 'subject' => $r['subject'] ) ) : new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+		return $r ? rest_ensure_response( array( 'html' => $r['html'], 'subject' => $r['subject'] ) ) : new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 	}
 
 	public static function email_send( \WP_REST_Request $req ) {
@@ -193,7 +193,7 @@ class Routes {
 			return $res;
 		}
 		if ( empty( $res['ok'] ) ) {
-			return new \WP_Error( 'bizyfinance_mail_failed', $res['error'], array( 'status' => 502 ) );
+			return new \WP_Error( 'wpflatfinance_mail_failed', $res['error'], array( 'status' => 502 ) );
 		}
 		return rest_ensure_response( $res );
 	}
@@ -203,20 +203,20 @@ class Routes {
 		if ( empty( $f['file']['tmp_name'] ) ) {
 			return new \WP_Error( 'bd_import_file', 'Choose the file exported from Invoice.ng.', array( 'status' => 400 ) );
 		}
-		$p = \BizyFinance\Import\Invoice_Import::parse( $f['file']['tmp_name'], (string) $f['file']['name'] );
+		$p = \WPFlatFinance\Import\Invoice_Import::parse( $f['file']['tmp_name'], (string) $f['file']['name'] );
 		if ( is_wp_error( $p ) ) {
 			return $p;
 		}
-		$out         = \BizyFinance\Import\Invoice_Import::preview( $p );
+		$out         = \WPFlatFinance\Import\Invoice_Import::preview( $p );
 		$out['rows'] = $p['rows'];
 		return rest_ensure_response( $out );
 	}
 
 	public static function import_run( \WP_REST_Request $req ) {
 		$p = (array) $req->get_json_params();
-		$r = \BizyFinance\Import\Invoice_Import::run( (array) ( $p['rows'] ?? array() ), (array) ( $p['plan'] ?? array() ), (string) ( $p['import_id'] ?? '' ) );
+		$r = \WPFlatFinance\Import\Invoice_Import::run( (array) ( $p['rows'] ?? array() ), (array) ( $p['plan'] ?? array() ), (string) ( $p['import_id'] ?? '' ) );
 		if ( ! is_wp_error( $r ) && ! empty( $p['last'] ) ) {
-			\BizyFinance\Import\Invoice_Import::finish( $r['import_id'] );
+			\WPFlatFinance\Import\Invoice_Import::finish( $r['import_id'] );
 		}
 		return is_wp_error( $r ) ? $r : rest_ensure_response( $r );
 	}
@@ -240,7 +240,7 @@ class Routes {
 	public static function invoice_mark_sent( \WP_REST_Request $req ) {
 		$row = Invoices::mark_sent( (int) $req['id'] );
 		if ( ! $row ) {
-			return new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 		}
 		$rows = Resources::repo( 'invoices' )->find( (int) $req['id'] );
 		return rest_ensure_response( array( 'status' => $rows['status'], 'url' => Invoices::public_url( Invoices::ensure_token( (int) $req['id'] ) ) ) );
@@ -249,7 +249,7 @@ class Routes {
 	public static function invoice_share( \WP_REST_Request $req ) {
 		$id = (int) $req['id'];
 		if ( ! Resources::repo( 'invoices' )->find( $id ) ) {
-			return new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 		}
 		$p     = (array) $req->get_json_params();
 		if ( isset( $p['slug'] ) && '' !== trim( (string) $p['slug'] ) ) {
@@ -271,10 +271,10 @@ class Routes {
 		$repo = Resources::repo( 'renewals' );
 		$r    = $repo->find( (int) $req['id'] );
 		if ( ! $r ) {
-			return new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 		}
 		if ( ! in_array( $r['status'], array( 'upcoming', 'due' ), true ) ) {
-			return new \WP_Error( 'bizyfinance_invalid', 'Only open renewals can be marked renewed.', array( 'status' => 400 ) );
+			return new \WP_Error( 'wpflatfinance_invalid', 'Only open renewals can be marked renewed.', array( 'status' => 400 ) );
 		}
 		$next = Renewals::mark_renewed( $r );
 		Activity::log( 'renewals', $r['id'], $r['client_id'], 'renewed', sprintf( 'Renewal marked renewed: %s — %s (%s)', $r['service_name'], $r['client_name'], $r['due_date'] ) . ( $next ? ' · next due ' . $next['due_date'] : '' ) );
@@ -291,10 +291,10 @@ class Routes {
 		$repo = Resources::repo( 'charges' );
 		$c    = $repo->find( (int) $req['id'] );
 		if ( ! $c ) {
-			return new \WP_Error( 'bizyfinance_not_found', 'Not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'wpflatfinance_not_found', 'Not found.', array( 'status' => 404 ) );
 		}
 		if ( 'pending' !== $c['status'] ) {
-			return new \WP_Error( 'bizyfinance_invalid', 'Only pending charges can be waived.', array( 'status' => 400 ) );
+			return new \WP_Error( 'wpflatfinance_invalid', 'Only pending charges can be waived.', array( 'status' => 400 ) );
 		}
 		$repo->update( $c['id'], array( 'status' => 'waived' ) );
 		Activity::log( 'charges', $c['id'], $c['client_id'], 'waived', sprintf( 'Charge waived: %s — %s', $c['description'], $c['client_name'] ) );

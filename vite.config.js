@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
-// BizyFinance is a separate bundle that runs inside BizyCore's page: Vue is not bundled again, it is BizyCore's window.Vue.
+// WPFlatFinance is a separate bundle that runs inside WPFlatCore's page: Vue is not bundled again, it is WPFlatCore's window.Vue.
 export default defineConfig( {
 	root: 'ui',
 	plugins: [ vue() ],
@@ -10,7 +10,7 @@ export default defineConfig( {
 		outDir: '../build',
 		emptyOutDir: true,
 		cssCodeSplit: false,
-		lib: { entry: 'main.js', name: 'BizyFinance', formats: [ 'iife' ], fileName: () => 'bizyfinance.js', cssFileName: 'bizyfinance' },
+		lib: { entry: 'main.js', name: 'WPFlatFinance', formats: [ 'iife' ], fileName: () => 'wpflatfinance.js', cssFileName: 'wpflatfinance' },
 		rollupOptions: { external: [ 'vue' ], output: { globals: { vue: 'Vue' } } },
 	},
 } );

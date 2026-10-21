@@ -1,8 +1,8 @@
 <?php
-namespace BizyFinance\Services;
+namespace WPFlatFinance\Services;
 
-use BizyFinance\Schema;
-use BizyCore\Lookups;
+use WPFlatFinance\Schema;
+use WPFlatCore\Lookups;
 
 defined( 'ABSPATH' ) || exit;
 

@@ -1,7 +1,7 @@
 <?php
-namespace BizyFinance\Services;
+namespace WPFlatFinance\Services;
 
-use BizyFinance\Schema;
+use WPFlatFinance\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -13,7 +13,7 @@ class Finance {
 
 	/** The client's primary department (falls back to its first one), or 0. */
 	public static function client_department( $client_id ) {
-		return \BizyCore\Services\Departments::client_primary( $client_id );
+		return \WPFlatCore\Services\Departments::client_primary( $client_id );
 	}
 
 	/**

@@ -9,7 +9,7 @@ const props = defineProps( { labels: Array, billed: Array, paid: Array, currency
 const canvas = ref( null );
 let chart = null;
 
-const token = ( name, fallback ) => getComputedStyle( document.getElementById( 'bizycore-root' ) || document.body ).getPropertyValue( name ).trim() || fallback;
+const token = ( name, fallback ) => getComputedStyle( document.getElementById( 'wpflatcore-root' ) || document.body ).getPropertyValue( name ).trim() || fallback;
 
 const rgba = ( hex, a ) => {
 	const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec( hex );

@@ -1,11 +1,11 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Assets;
+use WPFlatCore\Assets;
 
-use BizyFinance\Schema;
-use BizyCore\Services\Activity;
-use BizyFinance\Services\Invoices;
+use WPFlatFinance\Schema;
+use WPFlatCore\Services\Activity;
+use WPFlatFinance\Services\Invoices;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -48,7 +48,7 @@ class Public_Invoice {
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
 		header( 'Referrer-Policy: no-referrer' );
 
-		$is_admin = current_user_can( 'manage_bizycore' );
+		$is_admin = current_user_can( 'manage_wpflatcore' );
 		if ( ! $inv || ( ! $is_admin && in_array( $inv['status'], array( 'draft', 'cancelled' ), true ) ) ) {
 			status_header( 404 );
 			echo self::shell( 'Invoice unavailable', '<main class="bd-wrap"><div class="bd-doc bd-doc--empty"><h1>This invoice isn’t available</h1><p>The link may have expired or been replaced. Please contact the sender for a new link.</p></div></main>', '' ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -413,6 +413,6 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 	}
 
 	public static function shell( $title, $body, $biz ) {
-		return \BizyCore\Public_Page::shell( $title, $body, $biz );
+		return \WPFlatCore\Public_Page::shell( $title, $body, $biz );
 	}
 }

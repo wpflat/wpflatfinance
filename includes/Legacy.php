@@ -1,8 +1,8 @@
 <?php
-namespace BizyFinance;
+namespace WPFlatFinance;
 
-use BizyCore\Migration\Legacy as Core_Legacy;
-use BizyCore\Migration\Reader;
+use WPFlatCore\Migration\Legacy as Core_Legacy;
+use WPFlatCore\Migration\Reader;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,7 +19,7 @@ class Legacy {
 	);
 
 	public static function init() {
-		add_filter( 'bizycore_legacy_import_finance', array( __CLASS__, 'import' ), 10, 2 );
+		add_filter( 'wpflatcore_legacy_import_finance', array( __CLASS__, 'import' ), 10, 2 );
 	}
 
 	private static function columns( $table ) {
@@ -35,7 +35,7 @@ class Legacy {
 			$had += (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Schema::table( $new ) ); // phpcs:ignore WordPress.DB
 		}
 		if ( $had && empty( Core_Legacy::module_state( 'finance' )['done'] ) ) {
-			return new \WP_Error( 'bizyfinance_not_empty', 'BizyFinance already has records. Importing would mix them with the old ones. Remove them first, or skip this import.', array( 'status' => 409 ) );
+			return new \WP_Error( 'wpflatfinance_not_empty', 'WPFlat Finance already has records. Importing would mix them with the old ones. Remove them first, or skip this import.', array( 'status' => 409 ) );
 		}
 		foreach ( array_merge( array_values( self::TABLES ), array( 'client_billing', 'team_pay', 'project_money', 'phase_money', 'task_money' ) ) as $new ) {
 			$wpdb->query( 'TRUNCATE TABLE ' . Schema::table( $new ) ); // phpcs:ignore WordPress.DB
@@ -106,10 +106,10 @@ class Legacy {
 			Settings::update( $new );
 		}
 		if ( isset( $opts['bizydash_payout_next'] ) ) {
-			update_option( 'bizyfinance_payout_next', (int) $opts['bizydash_payout_next'] );
+			update_option( 'wpflatfinance_payout_next', (int) $opts['bizydash_payout_next'] );
 		}
 		$lk = 0;
-		$lt = \BizyCore\Database\Schema::table( 'bizy_lookups' );
+		$lt = \WPFlatCore\Database\Schema::table( 'wpflat_lookups' );
 		foreach ( Core_Legacy::rest( 'lookups' ) as $row ) {
 			if ( ! in_array( $row['type'], array( 'billing_period', 'billing_treatment', 'expense_category' ), true ) ) {
 				continue;
