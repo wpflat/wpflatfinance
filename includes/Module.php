@@ -14,6 +14,7 @@ class Module {
 	public static function init() {
 		Migrate::init();
 		Install::maybe_upgrade();
+		Handover::init();
 		add_action( 'wpflatcore_register', array( __CLASS__, 'register' ) );
 		add_action( 'wpflatcore_register_terms', array( __CLASS__, 'terms' ) );
 		add_action( 'wpflatcore_register_resources', array( Resources_Def::class, 'register' ) );
