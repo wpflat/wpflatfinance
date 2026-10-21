@@ -1,8 +1,8 @@
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ElMessage, ElMessageBox, RemoteSelect, sdk, StatusTag, addDays, addDaysTo, api, copyText, dept, errorMessage, fmtDate, navigate, round2, store, today } from '../core';
 import { currencyOptions, defaultCurrency, fmtMoney } from '../util';
-import { ArrowLeft, Plus, Delete, Link as LinkIcon, View, Promotion, Wallet, DocumentAdd } from '@element-plus/icons-vue';
+import { MoreFilled, ArrowLeft, Plus, Delete, Link as LinkIcon, View, Promotion, Wallet, DocumentAdd } from '@element-plus/icons-vue';
 import PaymentsDialog from '../components/PaymentsDialog.vue';
 import SendInvoiceDialog from '../components/SendInvoiceDialog.vue';
 import { catalogPrice } from '../resources';
@@ -54,6 +54,10 @@ const pickedBills = ref( [] );
 const svcPick = ref( 0 );
 const sendOpen = ref( false );
 const remindOpen = ref( false );
+/** On a phone the page's actions live in a bar fixed to the bottom (the tab bar steps aside). */
+onMounted( () => ( store.hideTabs = true ) );
+onBeforeUnmount( () => ( store.hideTabs = false ) );
+const barMode = computed( () => ( isNew.value || inv.status === 'draft' ? 'edit' : canRemind.value ? 'collect' : 'view' ) );
 const canRemind = computed( () => [ 'sent', 'due', 'partially_paid', 'overdue' ].includes( inv.status ) && Number( inv.balance ) > 0 );
 const emails = ref( [] );
 
@@ -656,6 +660,34 @@ const locked = computed( () => [ 'cancelled' ].includes( inv.status ) );
 				<el-button type="primary" :disabled="!pickedBills.length" @click="addBills">Add {{ pickedBills.length || '' }} to invoice</el-button>
 			</template>
 		</el-dialog>
+
+		<div v-if="store.isMobile && !loading" class="bd-ie__bar">
+			<template v-if="barMode === 'edit'">
+				<el-button :loading="saving" :disabled="locked" @click="save( false )">Save</el-button>
+				<el-button v-if="!locked" type="primary" :icon="Promotion" :loading="saving" @click="save( true )">Save &amp; send</el-button>
+			</template>
+			<template v-else-if="barMode === 'collect'">
+				<el-button @click="remindOpen = true">Send reminder</el-button>
+				<el-button type="primary" :icon="Wallet" @click="paying = true">Record payment</el-button>
+			</template>
+			<template v-else>
+				<el-button :icon="View" @click="preview">Preview</el-button>
+				<el-button type="primary" :icon="LinkIcon" @click="copyLink">Copy link</el-button>
+			</template>
+			<el-dropdown v-if="!isNew" trigger="click" placement="top-end">
+				<el-button circle :icon="MoreFilled" aria-label="More actions" />
+				<template #dropdown>
+					<div class="bd-more__menu">
+						<button type="button" class="bd-menuitem" @click="preview">Preview</button>
+						<button type="button" class="bd-menuitem" @click="copyLink">Copy link</button>
+						<button v-if="barMode !== 'collect'" type="button" class="bd-menuitem" @click="paying = true">Record payment</button>
+						<button v-if="barMode !== 'collect' && canRemind" type="button" class="bd-menuitem" @click="remindOpen = true">Send reminder</button>
+						<button v-if="barMode !== 'edit'" type="button" class="bd-menuitem" @click="sendOpen = true">Email the invoice</button>
+						<button v-if="barMode !== 'edit' && !locked" type="button" class="bd-menuitem" @click="save( false )">Save changes</button>
+					</div>
+				</template>
+			</el-dropdown>
+		</div>
 
 		<SendInvoiceDialog v-model="sendOpen" :invoice-id="Number( inv.id )" @sent="onSent" />
 		<SendInvoiceDialog v-model="remindOpen" mode="reminder" :invoice-id="Number( inv.id )" @sent="onSent" />
